@@ -72,7 +72,6 @@ $('#app').innerHTML = `
         <div class="editor-guidance"><p>Select words to give them their own ink treatment.</p><button id="edit-effects" class="subtle">${icon('sliders-horizontal')}<span>Edit ink & paper</span></button></div>
       </section>
       <section id="effects-panel" class="effects-panel" role="tabpanel" aria-labelledby="effects-tab" hidden>
-        <div class="process-control"><label for="finish">Process</label><select id="finish" aria-label="Rendering process"><option value="ink">Ink bleed</option><option value="print">Printed</option></select></div>
       <div id="mobile-paper" class="paper-section"></div>
       <section class="ink-controls" aria-labelledby="ink-title">
         <div class="controls-heading"><h2 id="ink-title">Ink & character</h2><div class="scope-switch" aria-label="Ink scope"><button id="document-scope" class="active" aria-pressed="true">Document</button><button id="selection-scope" disabled aria-pressed="false">Selection</button></div></div>
@@ -81,7 +80,7 @@ $('#app').innerHTML = `
         <div class="slider-row"><label for="variation">Unevenness</label><output id="variation-value" for="variation"></output><input id="variation" aria-label="Unevenness" type="range" min="0" max="100"/><div class="range-captions"><span>Uniform</span><span>Wandering</span></div></div>
         <div class="ink-actions"><button id="reroll" class="subtle">${icon('shuffle')}New impression</button><div id="selection-actions" hidden><button id="keep-clean" class="text-button">Keep clean</button><button id="use-document" class="text-button" title="Remove custom ink from the selection">Reset ink</button></div><span id="seed-label" class="seed-label"></span></div>
       </section>
-      <div id="print-settings" class="print-settings" hidden>
+      <div id="print-settings" class="print-settings">
         <div class="print-look"><label for="recipe">Starting look</label><select id="recipe" aria-label="Starting look"><option value="custom">Custom print</option><option value="book">Book print</option><option value="fiber">Rough paper</option></select><button id="reset-print" class="text-button">Reset effects</button></div>
         <p id="recipe-note" class="recipe-note">Build your own print, one effect at a time.</p>
         <details class="effect-group" name="print-effects" open><summary><span>Ink & paper</span>${icon('chevron-down')}</summary><div class="effects-grid">
@@ -92,13 +91,12 @@ $('#app').innerHTML = `
         <details class="effect-group" name="print-effects"><summary><span>Page shape</span>${icon('chevron-down')}</summary><div class="effects-grid"><div class="paper-style-control"><label for="page-turn">Turn text</label><select id="page-turn" aria-label="Turn text"><option value="0">Upright</option><option value="90">Quarter turn right</option><option value="180">Upside down</option><option value="270">Quarter turn left</option></select><p>Turn the whole impression and fit it on the page.</p></div>${printControlMarkup('page')}</div></details>
       </div>
 
-        <p id="ink-mode-note" class="inspector-note">Choose Printed for paper texture, worn ink, and letter edges.</p>
       </section>
     </aside>
     <section class="proof-panel" aria-label="Live ink preview">
       <div class="proof-toolbar">
         <div class="proof-title"><button id="toggle-sidebar" class="icon-button" aria-label="Hide editor" title="Hide editor" aria-controls="studio-sidebar" aria-expanded="true">${icon('panel-left-close')}</button><h1>Preview</h1></div>
-        <div class="view-switch" aria-label="Preview mode"><button id="view-ink" class="active" aria-pressed="true">Ink bleed</button><button id="view-original" aria-pressed="false">Original</button></div>
+        <div class="view-switch" aria-label="Preview mode"><button id="view-ink" class="active" aria-pressed="true">Printed</button><button id="view-original" aria-pressed="false">Original</button></div>
       </div>
       <div class="proof-stage" tabindex="0" aria-label="Paper preview. Use the zoom controls to inspect the print."><div class="paper-wrap"><div class="proof-sheet"><svg id="proof" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Live paper proof of your text"></svg><canvas id="printed-proof" role="img" aria-label="Printed proof of your text" hidden></canvas><canvas id="print-selection" aria-hidden="true"></canvas></div></div></div>
       <footer class="proof-footer">
@@ -106,7 +104,7 @@ $('#app').innerHTML = `
         <div class="paper-picker" aria-label="Paper color"><span>Paper</span><button data-paper="#f1ede4" class="swatch warm" aria-label="Warm paper" title="Warm paper" aria-pressed="true"></button><button data-paper="#fbfaf7" class="swatch white" aria-label="White paper" title="White paper" aria-pressed="false"></button><button data-paper="#e5dac3" class="swatch oat" aria-label="Oat paper" title="Oat paper" aria-pressed="false"></button><button data-paper="#ffffff" class="swatch bright-white" aria-label="Bright white paper" title="Bright white paper" aria-pressed="false"></button><button data-paper="#e3e5e8" class="swatch cool-gray" aria-label="Cool gray paper" title="Cool gray paper" aria-pressed="false"></button></div>
         <div class="zoom-controls" aria-label="Preview zoom"><button id="zoom-out" class="icon-button" aria-label="Zoom out">${icon('minus')}</button><button id="zoom-value" title="Reset to actual size" aria-label="Reset zoom to 100 percent">100%</button><button id="zoom-in" class="icon-button" aria-label="Zoom in">${icon('plus')}</button><span class="toolbar-divider"></span><button id="zoom-fit" class="text-button" aria-pressed="true">Fit page</button><button id="zoom-width" class="text-button" aria-pressed="false">Fit width</button><button id="zoom-actual" class="text-button" aria-pressed="false">100%</button></div>
       </footer>
-      <div class="proof-status"><span id="proof-font"></span><span id="print-status" role="status">Instant ink preview</span><button id="print-retry" class="text-button" hidden>Retry</button></div>
+      <div class="proof-status"><span id="proof-font"></span><span id="print-status" role="status">Preparing print…</span><button id="print-retry" class="text-button" hidden>Retry</button></div>
     </section>
   </main><div id="toast" role="status" class="toast"></div>`;
 const icons = { ArrowDownToLine, ChevronDown, Shuffle, Undo2, Redo2, AlignLeft, AlignCenter, AlignRight, Plus, Minus, Check, RotateCcw, SlidersHorizontal, ArrowUpRight, X, PanelLeftClose, PanelLeftOpen, Type };
@@ -136,7 +134,7 @@ const printSheet = $('.proof-sheet');
 const printSelection = $<HTMLCanvasElement>('#print-selection');
 let desiredPrint: PrintJob | null = null, printedKey = '', failedPrintKey = '';
 let printTask: Promise<void> | null = null, printTimer = 0;
-const engine = new PrintEngine(message => { if (state.finish === 'print' && !original) $('#print-status').textContent = message; });
+const engine = new PrintEngine(message => { if (!original) $('#print-status').textContent = message; });
 function showPrinted(show: boolean) {
   printCanvas.hidden = !show; printSheet.classList.toggle('has-print', show);
   printSelection.style.display = show ? 'block' : 'none';
@@ -155,7 +153,7 @@ async function ensurePrinted(): Promise<void> {
   clearTimeout(printTimer);
   if (printTask) return printTask;
   printTask = (async () => {
-    while (desiredPrint && printedKey !== desiredPrint.key && state.finish === 'print' && !original) {
+    while (desiredPrint && printedKey !== desiredPrint.key && !original) {
       const job = desiredPrint;
       if (failedPrintKey === job.key) break;
       try {
@@ -165,7 +163,7 @@ async function ensurePrinted(): Promise<void> {
         printCanvas.getContext('2d')!.putImageData(new ImageData(proof.pixels as Uint8ClampedArray<ArrayBuffer>, proof.width, proof.height), 0, 0);
         paintPrintSelection(proof.selection, proof.width, proof.height);
         printedKey = job.key;
-        if (state.finish === 'print' && !original) { showPrinted(true); showPrintSelection(); printReadyStatus(); }
+        if (!original) { showPrinted(true); showPrintSelection(); printReadyStatus(); }
       } catch (error) {
         failedPrintKey = job.key;
         if (desiredPrint?.key !== job.key) continue;
@@ -180,7 +178,7 @@ async function ensurePrinted(): Promise<void> {
 }
 function queuePrinted(ops: Op[]) {
   showPrintSelection();
-  if (state.finish !== 'print' || original) { showPrinted(false); $('#print-retry').hidden = true; $('#print-status').textContent = original ? 'Original type' : 'Instant ink preview'; return; }
+  if (original) { showPrinted(false); $('#print-retry').hidden = true; $('#print-status').textContent = 'Original type'; return; }
   const key = JSON.stringify([ops, state.font, state.size, state.leading, state.spread, state.variation, state.seed, state.paper, printSettings(state), selectionScope ? selection : null, fontRevision]);
   if (printedKey === key) { showPrinted(true); printReadyStatus(); return; }
   showPrinted(false);
@@ -208,9 +206,6 @@ function schedule() {
   });
 }
 function sync() {
-  $<HTMLSelectElement>('#finish').value = state.finish;
-  $('#print-settings').hidden = state.finish !== 'print';
-  $('#ink-mode-note').hidden = state.finish === 'print';
   $<HTMLSelectElement>('#paper-style').value = state.paperStyle;
   $<HTMLSelectElement>('#recipe').value = state.recipe;
   $<HTMLSelectElement>('#page-turn').value = String(state.pageTurn);
@@ -223,7 +218,6 @@ function sync() {
     $(`[data-control="${name}"]`).hidden = state.recipe !== 'custom' && ['texture', 'paperGrain'].includes(name);
   }
   $('[data-custom-only]').hidden = state.recipe !== 'custom';
-  $('#view-ink').textContent = state.finish === 'print' ? 'Printed' : 'Ink bleed';
   $('#editor').style.setProperty('--editor-font', fontOptions[state.font].family);
   $('#editor').style.setProperty('--editor-size', `${Math.max(21, state.size * .86)}px`);
   $('#editor').style.setProperty('--editor-leading', String(state.leading));
@@ -266,7 +260,6 @@ quill.on('text-change', () => {
   save(); sync();
 });
 function setPrintSettings(value: Partial<PrintSettings>) { Object.assign(state, printSettings({ ...state, ...value })); sync(); save(); }
-$('#finish').addEventListener('change', () => setPrintSettings({ finish: $<HTMLSelectElement>('#finish').value as PrintSettings['finish'] }));
 $('#paper-style').addEventListener('change', () => setPrintSettings({ paperStyle: $<HTMLSelectElement>('#paper-style').value as PrintSettings['paperStyle'] }));
 $('#recipe').addEventListener('change', () => setPrintSettings(recipeSettings($<HTMLSelectElement>('#recipe').value as PrintSettings['recipe'])));
 $('#page-turn').addEventListener('change', () => setPrintSettings({ pageTurn: Number($<HTMLSelectElement>('#page-turn').value) as PrintSettings['pageTurn'] }));
@@ -372,7 +365,7 @@ $('#export').addEventListener('click', async () => {
   const button = $<HTMLButtonElement>('#export'); button.disabled = true; button.querySelector('span')!.textContent = 'Exporting…';
   try {
     const { exportPng, downloadCanvas } = await import('./export');
-    if (state.finish === 'print' && !original) {
+    if (!original) {
       await new Promise(requestAnimationFrame); await ensurePrinted();
       if (!desiredPrint || printedKey !== desiredPrint.key) throw new Error('The print proof is not ready.');
       await downloadCanvas(printCanvas);
@@ -395,8 +388,8 @@ if (modelContext?.registerTool) {
   const register = (tool: unknown) => { try { void Promise.resolve(modelContext.registerTool(tool, { signal: lifecycle.signal })).catch(console.warn); } catch (error) { console.warn(error); } };
   register({ name: 'read_impression', description: 'Read the current text and document ink settings.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: true, untrustedContentHint: true }, execute: () => ({ text: quill.getText(), font: state.font, spread: state.spread, unevenness: state.variation, ...printSettings(state), printStatus: $('#print-status').textContent }) });
   register({ name: 'set_document_ink', description: 'Set document ink spread and unevenness while preserving selection overrides.', inputSchema: { type: 'object', properties: { spread: { type: 'integer', minimum: 0, maximum: 100 }, unevenness: { type: 'integer', minimum: 0, maximum: 100 } }, required: ['spread', 'unevenness'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, execute: async (input: unknown) => { const value = input as { spread: number; unevenness: number }; if (!value || ![value.spread, value.unevenness].every(x => Number.isInteger(x) && x >= 0 && x <= 100)) throw new Error('Ink values must be integers between 0 and 100.'); state.spread = value.spread; state.variation = value.unevenness; sync(); save(); await new Promise(requestAnimationFrame); return { spread: state.spread, unevenness: state.variation }; } });
-  register({ name: 'set_print_finish', description: 'Set print effects using the visible controls. Setting recipe chooses a starting look and resets added effects before applying other supplied values. Rendering runs locally in the background; read_impression reports status.', inputSchema: { type: 'object', properties: { finish: { type: 'string', enum: ['ink', 'print'] }, recipe: { type: 'string', enum: ['custom', 'book', 'fiber'] }, paperStyle: { type: 'string', enum: ['fibrous', 'multiscale'] }, pageTurn: { type: 'integer', enum: [0, 90, 180, 270] }, ...Object.fromEntries(Object.entries(printControls).map(([name, spec]) => [name, { type: 'integer', minimum: spec.min, maximum: spec.max, description: `${spec.label}. ${spec.help}` }])) }, required: ['finish'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, execute: (input: unknown) => {
-    if (!validPrintInput(input) || !input.finish) throw new Error('Choose a valid print setting within its slider range.');
+  register({ name: 'set_print_finish', description: 'Set print effects using the visible controls. Setting recipe chooses a starting look and resets added effects before applying other supplied values. Rendering runs locally in the background; read_impression reports status.', inputSchema: { type: 'object', properties: { finish: { type: 'string', enum: ['print'] }, recipe: { type: 'string', enum: ['custom', 'book', 'fiber'] }, paperStyle: { type: 'string', enum: ['fibrous', 'multiscale'] }, pageTurn: { type: 'integer', enum: [0, 90, 180, 270] }, ...Object.fromEntries(Object.entries(printControls).map(([name, spec]) => [name, { type: 'integer', minimum: spec.min, maximum: spec.max, description: `${spec.label}. ${spec.help}` }])) }, additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, execute: (input: unknown) => {
+    if (!validPrintInput(input)) throw new Error('Choose a valid print setting within its slider range.');
     setPrintSettings({ ...(input.recipe ? recipeSettings(input.recipe) : {}), ...input });
     return printSettings(state);
   } });

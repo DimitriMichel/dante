@@ -1,8 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { printDimensions, printSettings, printDefaults, recipeSettings, validPrintInput } from './print-settings';
-test('existing documents retain the original ink renderer', () => {
-  assert.equal(printSettings().finish, 'ink');
+test('new and saved documents use Printed without losing effect settings', () => {
+  assert.equal(printSettings().finish, 'print');
+  const saved = { ...printDefaults, finish: 'ink', texture: 72, wear: 37, rounding: 14, rotation: -3 };
+  assert.deepEqual(printSettings(saved), { ...saved, finish: 'print' });
+  assert.equal(validPrintInput({ finish: 'ink' }), false);
+  assert.equal(validPrintInput({ wear: 37 }), true);
   assert.deepEqual(printSettings({ texture: NaN, wear: Infinity }), printDefaults);
   assert.equal(printSettings({ finish: 'print', texture: 110, wear: -2 }).texture, 100);
   assert.equal(printSettings({ finish: 'print', texture: 110, wear: -2 }).wear, 0);

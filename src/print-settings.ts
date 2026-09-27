@@ -18,15 +18,16 @@ export const printControls = {
 } as const;
 export type PrintControl = keyof typeof printControls;
 export type PrintStyle = 'multiscale' | 'fibrous';
-export type PrintSettings = Record<PrintControl, number> & { finish: 'ink' | 'print'; paperStyle: PrintStyle; recipe: 'custom' | 'book' | 'fiber'; pageTurn: 0 | 90 | 180 | 270 };
-export const printDefaults: PrintSettings = { ...Object.fromEntries(Object.entries(printControls).map(([key, spec]) => [key, spec.initial])) as Record<PrintControl, number>, finish: 'ink', paperStyle: 'fibrous', recipe: 'custom', pageTurn: 0 };
-export function printSettings(value: Partial<PrintSettings> = {}): PrintSettings {
+export type PrintSettings = Record<PrintControl, number> & { finish: 'print'; paperStyle: PrintStyle; recipe: 'custom' | 'book' | 'fiber'; pageTurn: 0 | 90 | 180 | 270 };
+export const printDefaults: PrintSettings = { ...Object.fromEntries(Object.entries(printControls).map(([key, spec]) => [key, spec.initial])) as Record<PrintControl, number>, finish: 'print', paperStyle: 'fibrous', recipe: 'custom', pageTurn: 0 };
+export function printSettings(value: Partial<Omit<PrintSettings, 'finish'>> & { finish?: string } = {}): PrintSettings {
   const result = { ...printDefaults };
   for (const key of Object.keys(printControls) as PrintControl[]) {
     const x = value[key], spec = printControls[key];
     result[key] = typeof x === 'number' && Number.isFinite(x) ? Math.round(Math.min(spec.max, Math.max(spec.min, x))) : spec.initial;
   }
-  result.finish = value.finish === 'print' ? 'print' : 'ink';
+  // Migrate saved documents to the sole process without resetting their effects.
+  result.finish = 'print';
   result.paperStyle = value.paperStyle === 'multiscale' ? 'multiscale' : 'fibrous';
   result.recipe = value.recipe === 'book' || value.recipe === 'fiber' ? value.recipe : 'custom';
   result.pageTurn = [90, 180, 270].includes(value.pageTurn || 0) ? value.pageTurn! : 0;
@@ -43,7 +44,7 @@ export function validPrintInput(input: unknown): input is Partial<PrintSettings>
   const value = input as Record<string, unknown>;
   return Object.entries(value).every(([key, x]) => {
     if (key in printControls) { const spec = printControls[key as PrintControl]; return typeof x === 'number' && Number.isInteger(x) && x >= spec.min && x <= spec.max; }
-    if (key === 'finish') return x === 'ink' || x === 'print';
+    if (key === 'finish') return x === 'print';
     if (key === 'recipe') return ['custom', 'book', 'fiber'].includes(String(x));
     if (key === 'paperStyle') return x === 'multiscale' || x === 'fibrous';
     if (key === 'pageTurn') return [0, 90, 180, 270].includes(x as number);

@@ -17,11 +17,11 @@ Open the local URL printed by Vite. `npm run build` creates the static app in `d
 - Open **Effects** to adjust **Ink spread** and **Unevenness** for the document. The sidebar scrolls independently so the preview stays visible.
 - Select letters or words in the editor to give them their own ink settings. **Keep clean** preserves their original outlines. **Reset ink** returns them to the document settings.
 - **New impression** changes ink placement while preserving custom selections. **Original** compares against the clean type.
-- In **Effects**, select **Process → Printed** and choose a starting look: **Custom print**, **Book print**, or **Rough paper**. Book print and Rough paper run ocrodeg's complete original print presets; their built-in textures stay part of the starting look.
+- Printed is the only rendering process. In **Effects**, choose a starting look: **Custom print**, **Book print**, or **Rough paper**. Book print and Rough paper run ocrodeg's complete original print presets; their built-in textures stay part of the starting look.
 - **Ink & paper** controls dark ink texture, fading, missing ink, stray specks, and paper grain. Fading and wear are independent of ink texture. In Custom print, choose Paper fibers or Fine grain.
 - **Letter edges** controls rough, rounded, broken, and soft outlines.
 - **Page shape** controls wavy lines, crooked placement, tilt, width, size, position, and quarter turns. Page movement carries clean selections and their preview highlights along with the lettering.
-- **Reset effects** returns the chosen starting look to its defaults, preserving text, formatting, spread, and selection overrides. **Ink bleed** keeps the original renderer.
+- **Reset effects** returns the chosen starting look to its defaults, preserving text, formatting, spread, and selection overrides.
 - Choose Warm, White, Oat, Bright white, or Cool gray paper. On phones the paper colors are in Effects. Change spacing and alignment in Write. Export the current proof as a PNG at up to 2× resolution.
 - The preview opens at **Fit width** for inspecting ink. **Fit page** shows the entire sheet; **100%** shows actual size. Use the plus/minus buttons for 15–300% zoom, or click the percentage to return to 100%. Hide the sidebar with the button beside Preview for more room.
 - On narrow screens the preview stays above the Write/Effects panel. Tabs support arrow-key navigation, and selections survive switching panels.
@@ -46,7 +46,7 @@ The bundled fonts retain their upstream licenses in their packages and in `publi
 
 ## Browser print engine
 
-Printed mode executes the actual [NVlabs/ocrodeg](https://github.com/NVlabs/ocrodeg) Python module inside [Pyodide](https://pyodide.org/en/stable/) in a module Web Worker. No GPU or server processing is required. First use downloads the pinned runtime, NumPy, SciPy, and upstream source; an internet connection is needed for that load. Text and image pixels stay in the browser. Ordinary ink mode does not load the Python runtime.
+The print renderer executes the actual [NVlabs/ocrodeg](https://github.com/NVlabs/ocrodeg) Python module inside [Pyodide](https://pyodide.org/en/stable/) in a module Web Worker. No GPU or server processing is required. First use downloads the pinned runtime, NumPy, SciPy, and upstream source; an internet connection is needed for that load. Text and image pixels stay in the browser.
 
 The worker connects the complete `printlike_multiscale` and `printlike_fibrous` helpers using their original default arguments. Custom print separately composes the upstream primitives with the existing shaped text mask. Book print and Rough paper match the upstream grayscale output before paper-color tinting, protection of explicit clean selections, and any extra effects the user enables. These presets already contain texture and blotches; use Custom print to control those individually.
 
@@ -89,6 +89,6 @@ Upstream credit: ocrodeg by Thomas Breuel / NVIDIA. The upstream source is not b
 OCRODEG_SOURCE_DIR=/path/to/pinned-ocrodeg python3 tests/test_print_pipeline.py
 ```
 
-The upstream source remains external to this repository. Use the commit and integrity hash listed above. Browser checks cover WebAssembly execution, visible controls, selection editing, PNG export, and the original rendering mode.
+The upstream source remains external to this repository. Use the commit and integrity hash listed above. Browser checks cover WebAssembly execution, visible controls, selection editing, PNG export, and the Original comparison.
 
 The font menu and PNG font embedding share one font catalog. New bundled serif families come from [Fontsource](https://fontsource.org/), and the same local font files are used for the editor, proof, and export.
