@@ -1,6 +1,6 @@
 import { inkWalk, inkSetting } from './ink';
 import { graphicSvg, type Graphic } from './graphics';
-import { wrapParagraph } from './flow';
+import { wrapParagraph, prepareParagraph, clearFlowCache, displayGlyph } from './flow';
 export type Attributes = { bold?: boolean; italic?: boolean; header?: number; align?: string; ink?: string };
 export type Op = { insert?: unknown; attributes?: Attributes };
 export type RenderOptions = { family: string; size: number; leading: number; spread: number; variation: number; seed: number; paper: string; original: boolean; graphics?: Graphic[] };
@@ -61,6 +61,21 @@ export class InkRenderer {
   height = 900;
   readonly canvas = document.createElement('canvas');
   readonly context = this.canvas.getContext('2d')!;
+  private metrics = new Map<string, number[]>();
+  invalidateFonts() { this.metrics.clear(); clearFlowCache(); }
+  private advances(items: Glyph[], font: string) {
+    const text = items.map(g => displayGlyph(g.text)).join('');
+    const key = JSON.stringify([font, text]);
+    let widths = this.metrics.get(key);
+    if (!widths) {
+      this.context.font = font;
+      widths = [0]; let prefix = '';
+      for (const g of items) { prefix += displayGlyph(g.text); widths.push(this.context.measureText(prefix).width); }
+      this.metrics.set(key, widths);
+      if (this.metrics.size > 2048) this.metrics.delete(this.metrics.keys().next().value!);
+    }
+    return widths;
+  }
   private highlights = svg('g', { 'data-selection': 'true' });
   constructor(readonly root: SVGSVGElement) {}
   render(ops: Op[], options: RenderOptions) {
@@ -70,43 +85,29 @@ export class InkRenderer {
     const background = svg('rect', { width: '100%', height: '100%', fill: options.paper });
     this.root.replaceChildren(defs, background, source, layers, this.highlights);
     this.cells = []; let baseline = padding;
-    const measured = (items: Glyph[], size: number) => runs(items).reduce((width, run) => {
-      this.context.font = `${run.attrs.italic ? 'italic' : 'normal'} ${run.attrs.bold ? 700 : 400} ${size}px ${options.family}`;
-      return width + this.context.measureText(run.items.map(g => g.text).join('')).width;
-    }, 0);
     for (const paragraph of paragraphs(ops)) {
       const size = options.size * (paragraph.attrs.header === 1 ? 1.9 : paragraph.attrs.header === 2 ? 1.4 : 1);
       const lineHeight = size * (paragraph.attrs.header ? 1.18 : options.leading);
       const items = paragraph.glyphs;
-      const wrapped = wrapParagraph(items, line => measured(line, size), { baseline, lineHeight, size, left: padding, right: width - padding, graphics: options.graphics || [] });
+      const fontFor = (glyph: Glyph) => `${glyph.attrs.italic ? 'italic' : 'normal'} ${glyph.attrs.bold ? 700 : 400} ${size}px ${options.family}`;
+      const prepared = prepareParagraph(items, fontFor);
+      const wrapped = wrapParagraph(items, prepared, { baseline, lineHeight, size, left: padding, right: width - padding, graphics: options.graphics || [] });
       baseline = wrapped.baseline;
       for (const row of wrapped.lines) {
         const line = row.items;
         const rowWidth = row.right - row.left;
-        const lineWidth = measured(line, size);
+        const lineWidth = row.width;
         let x = row.left + (paragraph.attrs.align === 'center' ? (rowWidth - lineWidth) / 2 : paragraph.attrs.align === 'right' ? rowWidth - lineWidth : 0);
         const node = svg('text', { x, y: row.baseline, 'font-size': size, 'xml:space': 'preserve', 'white-space': 'pre' });
         source.append(node);
         for (const run of runs(line)) {
           const span = svg('tspan', { 'font-weight': run.attrs.bold ? 700 : 400, 'font-style': run.attrs.italic ? 'italic' : 'normal' });
-          span.textContent = run.items.map(g => g.text).join(''); node.append(span);
-          let charIndex = 0;
-          this.context.font = `${run.attrs.italic ? 'italic' : 'normal'} ${run.attrs.bold ? 700 : 400} ${size}px ${options.family}`;
-          let prefix = '';
-          run.items.forEach(glyph => {
-            const count = Array.from(glyph.text).length; let left = x, right = x;
-            try {
-              const positions: number[] = [];
-              for (let j = 0; j < count; j++) positions.push(span.getStartPositionOfChar(charIndex + j).x, span.getEndPositionOfChar(charIndex + j).x);
-              left = Math.min(...positions); right = Math.max(...positions);
-            } catch {
-              left = x + this.context.measureText(prefix).width;
-              right = x + this.context.measureText(prefix + glyph.text).width;
-            }
-            this.cells.push({ ...glyph, x: left, right, y: row.baseline - size, h: lineHeight });
-            prefix += glyph.text; charIndex += count;
+          span.textContent = run.items.map(g => displayGlyph(g.text)).join(''); node.append(span);
+          const advances = this.advances(run.items, fontFor(run.items[0]));
+          run.items.forEach((glyph, i) => {
+            this.cells.push({ ...glyph, x: x + advances[i], right: x + advances[i + 1], y: row.baseline - size, h: lineHeight });
           });
-          x += this.context.measureText(span.textContent).width;
+          x += advances.at(-1)!;
         }
       }
       if (paragraph.attrs.header) baseline += options.size * .35;

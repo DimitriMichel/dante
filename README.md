@@ -23,7 +23,7 @@ The same text, before and after its print treatment:
 - Prints on five paper colors, or ink on a transparent background for use in other designs. The transparent option is the fourth swatch, marked with an X; its preview sits on white.
 - Repeatable results from a saved seed, plus **New impression** when you want another variation.
 
-Vite, TypeScript, and Quill power the studio. The print engine runs in a browser worker.
+Vite, TypeScript, Quill, and Pretext power the studio. The print engine runs in a browser worker.
 
 ## Run locally
 
@@ -38,7 +38,7 @@ Open the local URL printed by Vite. `npm run build` creates the static app in `d
 
 - Write and format text in the **Write** tab. Choose EB Garamond, Libre Baskerville, Playfair Display, Bodoni Moda, Cormorant Garamond, Crimson Pro, Lora, or Georgia. The bundled families include regular, italic, bold, and bold italic.
 - Open **Effects** to adjust **Ink spread** and **Unevenness** for the document. The full-height sidebar scrolls independently. The paper sits on a dot-grid canvas to the right, with comparison, zoom, and export in a floating toolbar.
-- Open **Graphics** to add Orbits, Waves, or Rosette. Drag a graphic on the paper to place it. The print updates after release while the last completed print stays visible. Adjust Size, Detail, Line weight, and Text gap. Arrow keys move a focused graphic; Shift moves it farther. Duplicate or remove graphics from the same panel. A document can contain up to eight graphics.
+- Open **Graphics** to add Orbits, Waves, or Rosette. Drag a graphic on the paper to place it. Text reflows while you drag. A lighter printed proof updates during movement, then the full-resolution print replaces it after release. All ink effects remain enabled throughout; processing never flashes plain text. Press Escape to cancel a drag. Adjust Size, Detail, Line weight, and Text gap. Arrow keys move a focused graphic; Shift moves it farther. Duplicate or remove graphics from the same panel. A document can contain up to eight graphics.
 - Select letters or words in the editor to give them their own ink settings. **Keep clean** preserves their original outlines. **Reset ink** returns them to the document settings.
 - **New impression** changes ink placement while preserving custom selections. **Original** compares against the clean type.
 - Printed is the only rendering process. In **Effects**, choose a starting look: **Custom print**, **Book print**, or **Rough paper**. Book print and Rough paper run ocrodeg's complete original print presets; their built-in textures stay part of the starting look.
@@ -57,12 +57,13 @@ The renderer preserves shaped text runs, then overlays localized SVG ink diffusi
 
 Selection overrides live inside Quill's Delta as an inline `ink` attribute, so Quill maintains their position through edits and undo/redo. The clean text remains underneath the ink; soft alpha masks avoid hard clipping of letter edges.
 
-Graphics are deterministic SVG curves inside the same source ink layer as the text. The layout subtracts their circular contours from each text row, allowing text on either side of a graphic placed inside a paragraph. Graphics receive document ink diffusion and every print effect; selection-specific overrides still apply only to text. Their positions and settings save with the document. Drag targets follow the geometric transformation of the print, including page turns and waves. Selection frames never appear in exports.
+Graphics are deterministic SVG curves inside the same source ink layer as the text. The layout subtracts their circular contours from each text row, allowing text on either side of a graphic placed inside a paragraph. Pretext prepares and caches rich-text font measurements, then lays out each available interval as graphics move. Formatting and source selection offsets stay attached to the original Quill glyphs. A measurement-only whitespace adapter preserves repeated spaces; tabs use four spaces. Font loading invalidates measurement caches. Graphics receive document ink diffusion and every print effect; selection-specific overrides still apply only to text. Their positions and settings save with the document. Drag targets follow the geometric transformation of the print, including page turns and waves. Selection frames never appear in exports.
 
 The PNG export embeds the selected bundled font before rasterizing. Georgia uses the system's installed serif font. The initial proof is 720 × 900 units and grows vertically with the text. Ink editing and export run in the browser. Latin font subsets are bundled; other scripts use the browser's serif fallback. This first version uses left-to-right line layout.
 
 ## Sources
 
+- [Pretext](https://github.com/chenglou/pretext) — cached text measurement and rich-inline line layout
 - [Quill documentation](https://quilljs.com/docs/quickstart)
 - [Quill API](https://quilljs.com/docs/api)
 - [SVG filter effects](https://www.w3.org/TR/filter-effects-1/)
@@ -94,7 +95,9 @@ Custom texture keeps most ink dark. Missing ink has a strong visible maximum and
 
 Clean selections preserve their glyph mask and solid ink after page movement. Paper texture continues behind them, including the library presets. Selection highlights follow page movement and are excluded from export. Renders use seeded Python and NumPy generators. Editing stays responsive, and pending changes are coalesced so a stale print cannot replace a newer document. While changes render, the last completed print stays visible at its original proportions and is replaced only when the newest result is ready. Errors retain that last print and show a Retry action; the SVG proof is used only when no print has completed yet. The current successful printed bitmap is also the PNG export, excluding editor selection highlights.
 
-Printed proofs render at up to 2× resolution, capped at three million pixels and 8,192 pixels in height to bound browser memory. Long documents can therefore export at a lower scale. Preview and exported PNG use the same bitmap.
+During a pointer drag, printed previews use up to 0.65× resolution and coalesce pending positions. Completed previews from that same drag may be displayed while a newer position is processing. Release or cancellation requests the final full-resolution render, and PNG export waits for that final result. This keeps the actual ocrodeg effects during movement; preview timing depends on the device, document length, and chosen effects.
+
+Finished printed proofs render at up to 2× resolution, capped at three million pixels and 8,192 pixels in height to bound browser memory. Long documents can therefore export at a lower scale. Preview and exported PNG use the same bitmap.
 
 Pinned dependencies:
 
@@ -107,7 +110,7 @@ Upstream credit: ocrodeg by Thomas Breuel / NVIDIA. The upstream source is not b
 
 ## Verification
 
-`npm test` covers seeded ink, saved-setting compatibility, control limits, preset resets, output dimensions, graphic persistence, word wrapping around overlapping graphics, and preservation of every text grapheme. `npm run build` type-checks and builds the browser worker.
+`npm test` covers seeded ink, saved-setting compatibility, control limits, preset resets, output dimensions, graphic persistence, overlapping graphic contours. Open `/tests/pretext.html` on the Vite development server for real-font browser checks of Pretext wrapping, spaces, tabs, Unicode graphemes, mixed styles, cache reuse, actual SVG line widths, transparent interactive printing, and transformed selections. `npm run build` type-checks and builds the browser worker.
 
 `tests/test_print_pipeline.py` checks every effect, visible maximum wear, dark texture versus fading, exact upstream preset output, deterministic seeds, clean selections, transformed selection overlays, offset directions, graphic drag targets after page transformations, empty input, transparent backgrounds, soft alpha edges, and compositing over white. It needs Python with NumPy and SciPy and the pinned upstream `degrade.py` saved as `ocrodeg.py` in a separate directory:
 

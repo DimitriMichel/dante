@@ -5,6 +5,8 @@ material. It does not replace or restrict the licenses of third-party components
 
 - **Bundled serif fonts:** upstream license texts are in
   [public/font-licenses](public/font-licenses). Keep these notices with the fonts.
+- **Pretext (`@chenglou/pretext` 0.0.9):** MIT, copyright 2026 Pretext contributors.
+  The complete license is included in [public/vendor-licenses/pretext.txt](public/vendor-licenses/pretext.txt).
 - **Quill and Parchment:** BSD-3-Clause. Their packages include license notices.
 - **Lucide:** ISC, with the additional notices supplied in its package.
 - **Vite, TypeScript, and other npm packages:** consult the license files in each

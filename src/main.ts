@@ -140,7 +140,11 @@ const printSelection = $<HTMLCanvasElement>('#print-selection');
 let desiredPrint: PrintJob | null = null, printedKey = '', failedPrintKey = '';
 let printedSize: { width: number; height: number } | null = null;
 let printedGraphics: Graphic[] = [], graphicPlacements: GraphicPlacement[] = [];
-const graphicControls = new GraphicControls($('#graphics-panel'), $('#graphic-overlay'), () => state.graphics, () => ({ width: renderer.width, height: !printCanvas.hidden && printedSize ? printedSize.height : renderer.height, placements: original ? [] : graphicPlacements, printedGraphics: original ? [] : printedGraphics }), () => { sync(); save(); }, () => showSidebarTab('graphics'));
+let dragRevision = 0;
+const graphicControls = new GraphicControls($('#graphics-panel'), $('#graphic-overlay'), () => state.graphics, () => ({ width: renderer.width, height: !printCanvas.hidden && printedSize ? printedSize.height : renderer.height, placements: original ? [] : graphicPlacements, printedGraphics: original ? [] : printedGraphics }), () => { sync(); save(); }, () => showSidebarTab('graphics'), phase => {
+  if (phase === 'start') { dragRevision++; clearTimeout(printTimer); }
+  if (phase !== 'start') schedule();
+});
 let printTask: Promise<void> | null = null, printTimer = 0;
 const engine = new PrintEngine(message => { if (!original && printSheet.getAttribute('aria-busy') === 'true') $('#print-status').textContent = printedKey ? 'Updating print…' : message; });
 function showPrinted(show: boolean) {
@@ -177,13 +181,13 @@ async function ensurePrinted(): Promise<void> {
       if (failedPrintKey === job.key) break;
       try {
         const proof = await engine.render(job);
-        if (desiredPrint?.key !== job.key) continue;
+        if (desiredPrint?.key !== job.key && !(graphicControls.dragging && job.preview && desiredPrint?.preview && job.dragRevision === dragRevision)) continue;
         printCanvas.width = proof.width; printCanvas.height = proof.height;
         printCanvas.getContext('2d')!.putImageData(new ImageData(proof.pixels as Uint8ClampedArray<ArrayBuffer>, proof.width, proof.height), 0, 0);
         paintPrintSelection(proof.selection, proof.width, proof.height);
         printedGraphics = job.graphics; graphicPlacements = proof.graphics;
         printedKey = job.key; printedSize = { width: job.width, height: job.height };
-        if (!original) { showPrinted(true); showPrintSelection(); printReadyStatus(); updatePreviewScale(); }
+        if (!original) { showPrinted(true); showPrintSelection(); if (graphicControls.dragging) { $('#print-status').textContent = 'Moving graphic…'; } else printReadyStatus(); updatePreviewScale(); }
       } catch (error) {
         failedPrintKey = job.key;
         if (desiredPrint?.key !== job.key) continue;
@@ -200,9 +204,9 @@ async function ensurePrinted(): Promise<void> {
 function queuePrinted(ops: Op[]) {
   showPrintSelection();
   if (original) { showPrinted(false); printSheet.setAttribute('aria-busy', 'false'); $('#print-retry').hidden = true; $('#print-status').textContent = 'Original type'; return; }
-  const key = JSON.stringify([ops, state.font, state.size, state.leading, state.spread, state.variation, state.seed, state.paper, state.graphics, printSettings(state), selectionScope ? selection : null, fontRevision]);
+  const key = JSON.stringify([ops, state.font, state.size, state.leading, state.spread, state.variation, state.seed, state.paper, state.graphics, printSettings(state), selectionScope ? selection : null, fontRevision, graphicControls.dragging]);
   const alreadyQueued = desiredPrint?.key === key;
-  if (!alreadyQueued) desiredPrint = { ...state, graphics: structuredClone(state.graphics), selection: selectionScope && selection ? { ...selection } : null, key, root: renderer.root.cloneNode(true) as SVGSVGElement, width: renderer.width, height: renderer.height, cells: renderer.cells.map(cell => ({ ...cell, attrs: { ...cell.attrs } })), label: fontOptions[state.font].label };
+  if (!alreadyQueued) desiredPrint = { ...state, preview: graphicControls.dragging, dragRevision, graphics: structuredClone(state.graphics), selection: selectionScope && selection ? { ...selection } : null, key, root: renderer.root.cloneNode(true) as SVGSVGElement, width: renderer.width, height: renderer.height, cells: renderer.cells.map(cell => ({ ...cell, attrs: { ...cell.attrs } })), label: fontOptions[state.font].label };
   if (printedKey === key) {
     // Returning to the visible print cancels any newer result still in flight.
     clearTimeout(printTimer);
@@ -218,7 +222,9 @@ function queuePrinted(ops: Op[]) {
   }
   failedPrintKey = ''; $('#print-retry').hidden = true; $('#print-status').title = '';
   $('#print-status').textContent = printedKey ? 'Updating print…' : 'Preparing print…';
-  clearTimeout(printTimer); printTimer = window.setTimeout(() => void ensurePrinted(), 220);
+  clearTimeout(printTimer);
+  if (graphicControls.dragging) void ensurePrinted();
+  else printTimer = window.setTimeout(() => void ensurePrinted(), 220);
 }
 $('#print-retry').addEventListener('click', () => { failedPrintKey = ''; $('#print-retry').hidden = true; printSheet.setAttribute('aria-busy', 'true'); void ensurePrinted(); });
 window.addEventListener('pagehide', () => engine.stop(), { once: true });
@@ -296,7 +302,7 @@ $('#recipe').addEventListener('change', () => setPrintSettings(recipeSettings($<
 $('#page-turn').addEventListener('change', () => setPrintSettings({ pageTurn: Number($<HTMLSelectElement>('#page-turn').value) as PrintSettings['pageTurn'] }));
 $('#reset-print').addEventListener('click', () => { setPrintSettings(recipeSettings(state.recipe)); toast('Print effects reset. Your text and ink settings are unchanged.'); });
 for (const name of Object.keys(printControls) as PrintControl[]) $(`#${name}`).addEventListener('input', () => setPrintSettings({ [name]: Number($<HTMLInputElement>(`#${name}`).value) }));
-$('#font').addEventListener('change', () => { state.font = $<HTMLSelectElement>('#font').value as FontKey; sync(); save(); void document.fonts.ready.then(() => { fontRevision++; schedule(); }); });
+$('#font').addEventListener('change', () => { state.font = $<HTMLSelectElement>('#font').value as FontKey; sync(); save(); void document.fonts.ready.then(() => { fontRevision++; renderer.invalidateFonts(); schedule(); }); });
 $('#font-size').addEventListener('change', () => { state.size = Math.min(48, Math.max(18, Number($<HTMLInputElement>('#font-size').value) || 28)); sync(); save(); });
 $('#leading').addEventListener('change', () => { state.leading = Number($<HTMLSelectElement>('#leading').value); sync(); save(); });
 function format(name: string, value: unknown) {
@@ -372,8 +378,8 @@ function updatePreviewScale() {
   const availableHeight = stage.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
   if (!availableWidth || !availableHeight) return;
   const page = !printCanvas.hidden && printedSize ? printedSize : renderer;
-  if (zoomMode === 'page') zoom = Math.min(availableWidth / page.width, availableHeight / page.height);
-  if (zoomMode === 'width') zoom = availableWidth / page.width;
+  if (!graphicControls.dragging && zoomMode === 'page') zoom = Math.min(availableWidth / page.width, availableHeight / page.height);
+  if (!graphicControls.dragging && zoomMode === 'width') zoom = availableWidth / page.width;
   $('.paper-wrap').style.width = `${Math.max(1, page.width * zoom)}px`;
   $('#zoom-value').textContent = `${Math.round(zoom * 100)}%`;
   $('#zoom-fit').setAttribute('aria-pressed', String(zoomMode === 'page'));
@@ -402,7 +408,7 @@ $('#export').addEventListener('click', async () => {
     const { exportPng, downloadCanvas } = await import('./export');
     if (!original) {
       await new Promise(requestAnimationFrame); await ensurePrinted();
-      if (!desiredPrint || printedKey !== desiredPrint.key) throw new Error('The print proof is not ready.');
+      if (!desiredPrint || desiredPrint.preview || printedKey !== desiredPrint.key) throw new Error('The print proof is not ready.');
       await downloadCanvas(printCanvas);
     } else await exportPng(renderer.root, renderer.width, renderer.height, state.font, fontOptions[state.font].label);
     toast('Your impression is ready.');
@@ -412,9 +418,9 @@ $('#export').addEventListener('click', async () => {
 });
 window.addEventListener('keydown', event => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') { event.preventDefault(); save(); toast('Saved on this device.'); } if (event.key === 'Escape') { $('#selection-control').setAttribute('data-tooltip-dismissed', ''); selection = null; selectionScope = false; sync(); } });
 sync();
-void document.fonts.ready.then(() => { fontRevision++; schedule(); });
+void document.fonts.ready.then(() => { fontRevision++; renderer.invalidateFonts(); schedule(); });
 // Keep render fonts loaded before proofing, including italic and bold runs.
-async function loadFonts() { await Promise.all(Object.values(fontOptions).flatMap(font => [document.fonts.load(`28px ${font.family}`), document.fonts.load(`italic 28px ${font.family}`), document.fonts.load(`700 28px ${font.family}`), document.fonts.load(`italic 700 28px ${font.family}`)])); fontRevision++; schedule(); }
+async function loadFonts() { await Promise.all(Object.values(fontOptions).flatMap(font => [document.fonts.load(`28px ${font.family}`), document.fonts.load(`italic 28px ${font.family}`), document.fonts.load(`700 28px ${font.family}`), document.fonts.load(`italic 700 28px ${font.family}`)])); fontRevision++; renderer.invalidateFonts(); schedule(); }
 void loadFonts();
 // Feature-detected WebMCP uses the same document and controls as the visible app.
 const modelContext = (document as Document & { modelContext?: { registerTool: (tool: unknown, options: unknown) => Promise<void> | void } }).modelContext;

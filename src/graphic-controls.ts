@@ -13,9 +13,9 @@ export const graphicsMarkup = `
 type Geometry = { width: number; height: number; placements: GraphicPlacement[]; printedGraphics: Graphic[] };
 export class GraphicControls {
   selectedId: string | null = null;
-  private dragging = false;
+  dragging = false;
   private readonly buttons = new Map<string, HTMLButtonElement>();
-  constructor(private panel: HTMLElement, private overlay: HTMLElement, private graphics: () => Graphic[], private geometry: () => Geometry, private change: () => void, private open: () => void) {
+  constructor(private panel: HTMLElement, private overlay: HTMLElement, private graphics: () => Graphic[], private geometry: () => Geometry, private change: () => void, private open: () => void, private drag: (phase: 'start' | 'move' | 'end') => void) {
     for (const button of panel.querySelectorAll<HTMLButtonElement>('[data-add-graphic]')) {
       button.querySelector('.graphic-sample')!.append(graphicSvg({ kind: button.dataset.addGraphic as GraphicKind, lines: 5, weight: 1.1 }));
       button.addEventListener('click', () => {
@@ -115,18 +115,27 @@ export class GraphicControls {
     const startX = event.clientX, startY = event.clientY, origin = { x: g.x, y: g.y };
     const geometry = this.geometry(), rect = this.overlay.getBoundingClientRect();
     const inverse = this.placement(g).inverse;
+    this.drag('start');
     const move = (e: PointerEvent) => {
+      if (e.pointerId !== event.pointerId) return;
       const dx = (e.clientX - startX) * geometry.width / rect.width, dy = (e.clientY - startY) * geometry.height / rect.height;
       moveGraphic(g, origin.x + inverse[0] * dx + inverse[1] * dy, origin.y + inverse[2] * dx + inverse[3] * dy, geometry.height);
-      this.syncOverlay();
+      this.syncOverlay(); this.drag('move');
     };
     const finish = (e: PointerEvent) => {
+      if (e.pointerId !== event.pointerId) return;
       if (e.type === 'pointercancel' || e.type === 'lostpointercapture') { g.x = origin.x; g.y = origin.y; }
       this.dragging = false; button.classList.remove('is-dragging');
       button.removeEventListener('pointermove', move); button.removeEventListener('pointerup', finish); button.removeEventListener('pointercancel', finish); button.removeEventListener('lostpointercapture', finish);
+      button.removeEventListener('keydown', cancel);
       if (button.hasPointerCapture(event.pointerId)) button.releasePointerCapture(event.pointerId);
-      this.change(); this.sync();
+      this.drag('end'); this.change(); this.sync();
     };
+    const cancel = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault(); e.stopPropagation(); g.x = origin.x; g.y = origin.y; finish(event);
+    };
+    button.addEventListener('keydown', cancel);
     button.addEventListener('pointermove', move); button.addEventListener('pointerup', finish); button.addEventListener('pointercancel', finish); button.addEventListener('lostpointercapture', finish);
   }
 }

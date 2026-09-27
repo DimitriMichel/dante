@@ -2,7 +2,7 @@ import { rasterizeProof } from './export';
 import { printDimensions, printSettings, type PrintSettings } from './print-settings';
 import { graphicBox, type Graphic, type GraphicPlacement } from './graphics';
 import type { Cell } from './render';
-export type PrintJob = PrintSettings & { key: string; graphics: Graphic[]; root: SVGSVGElement; width: number; height: number; cells: Cell[]; font: string; label: string; seed: number; paper: string; selection: { index: number; length: number } | null };
+export type PrintJob = PrintSettings & { preview?: boolean; dragRevision?: number; key: string; graphics: Graphic[]; root: SVGSVGElement; width: number; height: number; cells: Cell[]; font: string; label: string; seed: number; paper: string; selection: { index: number; length: number } | null };
 export type PrintedProof = { width: number; height: number; pixels: Uint8ClampedArray; selection: Uint8Array; elapsed: number; graphics: GraphicPlacement[] };
 export class PrintEngine {
   private worker?: Worker;
@@ -25,7 +25,9 @@ export class PrintEngine {
   }
   stop() { if (this.pending) clearTimeout(this.pending.timer); this.pending = undefined; this.worker?.terminate(); this.worker = undefined; }
   async render(job: PrintJob): Promise<PrintedProof> {
-    const { width, height, scale } = printDimensions(job.width, job.height);
+    const full = printDimensions(job.width, job.height);
+    const scale = job.preview ? Math.min(.65, full.scale) : full.scale;
+    const width = Math.max(1, Math.floor(job.width * scale)), height = Math.max(1, Math.floor(job.height * scale));
     this.progress('Preparing your type…');
     const canvas = await rasterizeProof(job.root, job.width, job.height, job.font, job.label, scale, true);
     const pixels = canvas.getContext('2d')!.getImageData(0, 0, width, height).data;
