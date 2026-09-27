@@ -13,7 +13,7 @@ Open the local URL printed by Vite. `npm run build` creates the static app in `d
 
 ## Use
 
-- Write and format text in **Compose**. Choose EB Garamond, Libre Baskerville, Playfair Display, or Georgia.
+- Write and format text in **Compose**. Choose EB Garamond, Libre Baskerville, Playfair Display, Bodoni Moda, Cormorant Garamond, Crimson Pro, Lora, or Georgia. The bundled families include regular, italic, bold, and bold italic.
 - Adjust **Ink spread** and **Unevenness** for the document.
 - Select letters or words in the editor to give them their own ink settings. **Keep clean** preserves their original outlines. **Reset ink** returns them to the document settings.
 - **New impression** changes ink placement while preserving custom selections. **Original** compares against the clean type.
@@ -22,7 +22,7 @@ Open the local URL printed by Vite. `npm run build` creates the static app in `d
 - **Letter edges** controls rough, rounded, broken, and soft outlines.
 - **Page shape** controls wavy lines, crooked placement, tilt, width, size, position, and quarter turns. Page movement carries clean selections and their preview highlights along with the lettering.
 - **Reset effects** returns the chosen starting look to its defaults, preserving text, formatting, spread, and selection overrides. **Ink bleed** keeps the original renderer.
-- Change the paper, spacing, alignment, or preview zoom. Export the current proof as a PNG at up to 2× resolution.
+- Choose Warm, White, Oat, Bright white, or Cool gray paper. Change spacing, alignment, or preview zoom. Export the current proof as a PNG at up to 2× resolution.
 - The document saves in this browser on this device. There is no cloud document sync. Clearing browser storage removes the saved document.
 
 ## Rendering
@@ -40,7 +40,7 @@ The PNG export embeds the selected bundled font before rasterizing. Georgia uses
 - [SVG filter effects](https://www.w3.org/TR/filter-effects-1/)
 - [Fontsource](https://fontsource.org/) — locally bundled open-source serif typefaces
 
-Fonts retain their upstream licenses in their packages. Quill uses the BSD-3-Clause license.
+The bundled fonts retain their upstream licenses in their packages and in `public/font-licenses/`. Quill uses the BSD-3-Clause license.
 
 ## Browser print engine
 
@@ -88,3 +88,5 @@ OCRODEG_SOURCE_DIR=/path/to/pinned-ocrodeg python3 tests/test_print_pipeline.py
 ```
 
 The upstream source remains external to this repository. Use the commit and integrity hash listed above. Browser checks cover WebAssembly execution, visible controls, selection editing, PNG export, and the original rendering mode.
+
+The font menu and PNG font embedding share one font catalog. New bundled serif families come from [Fontsource](https://fontsource.org/), and the same local font files are used for the editor, proof, and export.

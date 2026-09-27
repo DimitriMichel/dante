@@ -1,31 +1,13 @@
 import Quill from 'quill';
 import { Attributor, Scope } from 'parchment';
 import { createIcons, ArrowDownToLine, ChevronDown, Shuffle, Undo2, Redo2, AlignLeft, AlignCenter, AlignRight, Plus, Minus, Check, RotateCcw, SlidersHorizontal, ArrowUpRight, X } from 'lucide';
-import '@fontsource/eb-garamond/latin-400.css';
-import '@fontsource/eb-garamond/latin-400-italic.css';
-import '@fontsource/eb-garamond/latin-700.css';
-import '@fontsource/eb-garamond/latin-700-italic.css';
-import '@fontsource/libre-baskerville/latin-400.css';
-import '@fontsource/libre-baskerville/latin-400-italic.css';
-import '@fontsource/libre-baskerville/latin-700.css';
-import '@fontsource/libre-baskerville/latin-700-italic.css';
-import '@fontsource/playfair-display/latin-400.css';
-import '@fontsource/playfair-display/latin-400-italic.css';
-import '@fontsource/playfair-display/latin-700.css';
-import '@fontsource/playfair-display/latin-700-italic.css';
 import 'quill/dist/quill.core.css';
 import './style.css';
 import { InkRenderer, type Op } from './render';
+import { fontOptions, type FontKey } from './fonts';
 import { PrintEngine, type PrintJob } from './print-engine';
 import { printDefaults, printSettings, printControls, recipeSettings, validPrintInput, type PrintSettings, type PrintControl } from './print-settings';
 
-const fontOptions = {
-  garamond: { label: 'EB Garamond', family: '"EB Garamond", Georgia, serif' },
-  baskerville: { label: 'Libre Baskerville', family: '"Libre Baskerville", Georgia, serif' },
-  playfair: { label: 'Playfair Display', family: '"Playfair Display", Georgia, serif' },
-  georgia: { label: 'Georgia', family: 'Georgia, serif' },
-};
-type FontKey = keyof typeof fontOptions;
 type State = PrintSettings & { font: FontKey; size: number; leading: number; spread: number; variation: number; seed: number; paper: string; ops: Op[] };
 const defaultOps: Op[] = [
   { insert: 'A little more\nhuman.', attributes: {} },
@@ -104,7 +86,7 @@ $('#app').innerHTML = `
         <details class="effect-group"><summary>Page shape</summary><div class="effects-grid"><div class="paper-style-control"><label for="page-turn">Turn text</label><select id="page-turn" aria-label="Turn text"><option value="0">Upright</option><option value="90">Quarter turn right</option><option value="180">Upside down</option><option value="270">Quarter turn left</option></select><p>Turn the whole impression and fit it on the page.</p></div>${printControlMarkup('page')}</div></details>
       </div>
       <div class="proof-stage"><div class="paper-wrap"><div class="paper-topline"><span id="proof-font"></span><span id="proof-caption">AN ORIGINAL IMPRESSION</span></div><div class="proof-sheet"><svg id="proof" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Live paper proof of your text"></svg><canvas id="printed-proof" role="img" aria-label="ocrodeg printed proof" hidden></canvas><canvas id="print-selection" aria-hidden="true"></canvas></div><div class="paper-bottomline"><span id="proof-details"></span><span>MADE TO BE IMPERFECT.</span></div></div></div>
-      <footer class="proof-footer"><div class="paper-picker" aria-label="Paper color"><span>Paper</span><button data-paper="#f1ede4" class="swatch warm" aria-label="Warm paper" title="Warm paper" aria-pressed="true"></button><button data-paper="#fbfaf7" class="swatch white" aria-label="White paper" title="White paper" aria-pressed="false"></button><button data-paper="#e5dac3" class="swatch oat" aria-label="Oat paper" title="Oat paper" aria-pressed="false"></button></div><div class="layout-controls"><button id="align" class="icon-button" aria-label="Text alignment: left" title="Cycle text alignment">${icon('align-left')}</button><select id="leading" aria-label="Line spacing"><option value="1.3">1.3×</option><option value="1.5">1.5×</option><option value="1.7">1.7×</option></select><span class="toolbar-divider"></span><button id="zoom-out" class="icon-button" aria-label="Zoom out">${icon('minus')}</button><button id="zoom-fit" class="text-button" title="Fit paper to view">Fit</button><button id="zoom-in" class="icon-button" aria-label="Zoom in">${icon('plus')}</button></div></footer>
+      <footer class="proof-footer"><div class="paper-picker" aria-label="Paper color"><span>Paper</span><button data-paper="#f1ede4" class="swatch warm" aria-label="Warm paper" title="Warm paper" aria-pressed="true"></button><button data-paper="#fbfaf7" class="swatch white" aria-label="White paper" title="White paper" aria-pressed="false"></button><button data-paper="#e5dac3" class="swatch oat" aria-label="Oat paper" title="Oat paper" aria-pressed="false"></button><button data-paper="#ffffff" class="swatch bright-white" aria-label="Bright white paper" title="Bright white paper" aria-pressed="false"></button><button data-paper="#e3e5e8" class="swatch cool-gray" aria-label="Cool gray paper" title="Cool gray paper" aria-pressed="false"></button></div><div class="layout-controls"><button id="align" class="icon-button" aria-label="Text alignment: left" title="Cycle text alignment">${icon('align-left')}</button><select id="leading" aria-label="Line spacing"><option value="1.3">1.3×</option><option value="1.5">1.5×</option><option value="1.7">1.7×</option></select><span class="toolbar-divider"></span><button id="zoom-out" class="icon-button" aria-label="Zoom out">${icon('minus')}</button><button id="zoom-fit" class="text-button" title="Fit paper to view">Fit</button><button id="zoom-in" class="icon-button" aria-label="Zoom in">${icon('plus')}</button></div></footer>
     </section>
   </main><div id="toast" role="status" class="toast"></div>`;
 const icons = { ArrowDownToLine, ChevronDown, Shuffle, Undo2, Redo2, AlignLeft, AlignCenter, AlignRight, Plus, Minus, Check, RotateCcw, SlidersHorizontal, ArrowUpRight, X };
@@ -321,7 +303,7 @@ window.addEventListener('keydown', event => { if ((event.metaKey || event.ctrlKe
 sync();
 void document.fonts.ready.then(() => { fontRevision++; schedule(); });
 // Keep render fonts loaded before proofing, including italic and bold runs.
-async function loadFonts() { await Promise.all(Object.values(fontOptions).flatMap(font => [document.fonts.load(`28px ${font.family}`), document.fonts.load(`italic 28px ${font.family}`), document.fonts.load(`700 28px ${font.family}`)])); fontRevision++; schedule(); }
+async function loadFonts() { await Promise.all(Object.values(fontOptions).flatMap(font => [document.fonts.load(`28px ${font.family}`), document.fonts.load(`italic 28px ${font.family}`), document.fonts.load(`700 28px ${font.family}`), document.fonts.load(`italic 700 28px ${font.family}`)])); fontRevision++; schedule(); }
 void loadFonts();
 // Feature-detected WebMCP uses the same document and controls as the visible app.
 const modelContext = (document as Document & { modelContext?: { registerTool: (tool: unknown, options: unknown) => Promise<void> | void } }).modelContext;

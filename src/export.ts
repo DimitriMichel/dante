@@ -1,12 +1,12 @@
+import { fontOptions, type FontKey } from './fonts';
 const fontFiles = import.meta.glob('../node_modules/@fontsource/*/files/*-latin-{400,700}-{normal,italic}.woff2', { query: '?url', import: 'default' });
-const familyFolders: Record<string, string> = { garamond: 'eb-garamond', baskerville: 'libre-baskerville', playfair: 'playfair-display' };
 async function dataUrl(blob: Blob): Promise<string> { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = reject; reader.readAsDataURL(blob); }); }
 const embeddedFonts = new Map<string, Promise<string>>();
 export async function rasterizeProof(root: SVGSVGElement, width: number, height: number, font: string, label: string, scale = Math.min(2, 8192 / height), mask = false) {
   const clone = root.cloneNode(true) as SVGSVGElement;
   clone.querySelector('[data-selection]')?.remove();
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-  const folder = familyFolders[font];
+  const folder = fontOptions[font as FontKey]?.folder;
   if (folder) {
     if (!embeddedFonts.has(font)) embeddedFonts.set(font, Promise.all(Object.entries(fontFiles).filter(([path]) => path.includes(`/${folder}/`) && /-latin-(400|700)-(normal|italic)\.woff2$/.test(path)).map(async ([path, loader]) => {
       const url = await loader() as string, match = path.match(/-latin-(400|700)-(normal|italic)\.woff2$/)!;
