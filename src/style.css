@@ -151,7 +151,7 @@ body:has(#selection-actions:not([hidden])) .seed-label { display: none; }
   .proof-toolbar { min-height: 55px; padding: 1px 12px 1px 8px; }
   .proof-stage { padding: 14px; }
   .proof-footer { justify-content: center; padding: 4px 8px; }
-  .proof-footer .paper-picker, #proof-font { display: none; }
+  .proof-footer .paper-picker { display: none; }
   .proof-status { min-height: 26px; padding: 2px 16px 6px; }
   .zoom-controls .text-button { padding-inline: 8px; }
   .sidebar-tabs { padding: 5px 12px; min-height: 54px; }

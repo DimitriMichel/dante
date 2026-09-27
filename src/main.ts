@@ -103,7 +103,7 @@ $('#app').innerHTML = `
         <div class="paper-picker" aria-label="Paper color"><span>Paper</span><button data-paper="#f1ede4" class="swatch warm" aria-label="Warm paper" title="Warm paper" aria-pressed="true"></button><button data-paper="#fbfaf7" class="swatch white" aria-label="White paper" title="White paper" aria-pressed="false"></button><button data-paper="#e5dac3" class="swatch oat" aria-label="Oat paper" title="Oat paper" aria-pressed="false"></button><button data-paper="#ffffff" class="swatch bright-white" aria-label="Bright white paper" title="Bright white paper" aria-pressed="false"></button><button data-paper="#e3e5e8" class="swatch cool-gray" aria-label="Cool gray paper" title="Cool gray paper" aria-pressed="false"></button></div>
         <div class="zoom-controls" aria-label="Preview zoom"><button id="zoom-out" class="icon-button" aria-label="Zoom out">${icon('minus')}</button><button id="zoom-value" title="Reset to actual size" aria-label="Reset zoom to 100 percent">100%</button><button id="zoom-in" class="icon-button" aria-label="Zoom in">${icon('plus')}</button><span class="toolbar-divider"></span><button id="zoom-fit" class="text-button" aria-pressed="true">Fit page</button><button id="zoom-width" class="text-button" aria-pressed="false">Fit width</button><button id="zoom-actual" class="text-button" aria-pressed="false">100%</button></div>
       </footer>
-      <div class="proof-status"><span id="proof-font"></span><span id="print-status" role="status">Preparing print…</span><button id="print-retry" class="text-button" hidden>Retry</button></div>
+      <div class="proof-status"><span id="print-status" role="status">Preparing print…</span><button id="print-retry" class="text-button" hidden>Retry</button></div>
     </section>
   </main><div id="toast" role="status" class="toast"></div>`;
 const icons = { ArrowDownToLine, ChevronDown, Shuffle, Undo2, Redo2, AlignLeft, AlignCenter, AlignRight, Plus, Minus, Check, RotateCcw, SlidersHorizontal, ArrowUpRight, X, PanelLeftClose, PanelLeftOpen, Type };
@@ -200,7 +200,6 @@ function schedule() {
     renderer.render(ops, { ...state, family: fontOptions[state.font].family, original });
     renderer.highlight(selectionScope ? selection : null);
     queuePrinted(ops);
-    $('#proof-font').textContent = fontOptions[state.font].label;
     updatePreviewScale();
   });
 }
