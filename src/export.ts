@@ -1,6 +1,7 @@
 import { fontOptions, type FontKey } from './fonts';
 const fontFiles = import.meta.glob('../node_modules/@fontsource/*/files/*-latin-{400,700}-{normal,italic}.woff2', { query: '?url', import: 'default' });
 async function dataUrl(blob: Blob): Promise<string> { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = reject; reader.readAsDataURL(blob); }); }
+const embeddedImages = new Map<string, Promise<string>>();
 const embeddedFonts = new Map<string, Promise<string>>();
 export async function rasterizeProof(root: SVGSVGElement, width: number, height: number, font: string, label: string, scale = Math.min(2, 8192 / height), mask = false) {
   const clone = root.cloneNode(true) as SVGSVGElement;
@@ -16,6 +17,17 @@ export async function rasterizeProof(root: SVGSVGElement, width: number, height:
     const css = await embeddedFonts.get(font)!;
     const style = document.createElementNS('http://www.w3.org/2000/svg', 'style'); style.textContent = css; clone.prepend(style);
   }
+  // An SVG decoded as an image cannot fetch its own linked engraving files.
+  // Embed each same-origin asset once so print masks and PNGs contain the artwork.
+  await Promise.all(Array.from(clone.querySelectorAll('image')).map(async image => {
+    const href = image.getAttribute('href');
+    if (!href || href.startsWith('data:')) return;
+    if (!embeddedImages.has(href)) embeddedImages.set(href, fetch(href).then(async response => {
+      if (!response.ok) throw new Error('The engraving could not load. Please retry.');
+      return dataUrl(await response.blob());
+    }).catch(error => { embeddedImages.delete(href); throw error; }));
+    image.setAttribute('href', await embeddedImages.get(href)!);
+  }));
   if (mask) {
     clone.querySelector(':scope > rect')?.setAttribute('fill', 'white');
     clone.querySelector('#ink-source')?.setAttribute('fill', 'black');

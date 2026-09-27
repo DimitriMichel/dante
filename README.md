@@ -17,7 +17,7 @@ The same text, before and after its print treatment:
 ## What you can make
 
 - Soft ink spread or a heavily worn impression, with separate controls for texture, fading, and missing ink.
-- Sparse orbital, wave, and rosette graphics, with text that wraps around their outlines.
+- A library of 18 graphics: scientific diagrams, mathematical curves, and six historical animal engravings. Text wraps around them as you move them.
 - Different treatments for selected words, including letters kept completely clean.
 - Book-like and fibrous print textures, rough or rounded edges, and subtle page distortion.
 - Prints on five paper colors, or ink on a transparent background for use in other designs. The transparent option is the fourth swatch, marked with an X; its preview sits on white.
@@ -38,7 +38,7 @@ Open the local URL printed by Vite. `npm run build` creates the static app in `d
 
 - Write and format text in the **Write** tab. Choose EB Garamond, Libre Baskerville, Playfair Display, Bodoni Moda, Cormorant Garamond, Crimson Pro, Lora, or Georgia. The bundled families include regular, italic, bold, and bold italic.
 - Open **Effects** to adjust **Ink spread** and **Unevenness** for the document. The full-height sidebar scrolls independently. The paper sits on a dot-grid canvas to the right, with comparison, zoom, and export in a floating toolbar.
-- Open **Graphics** to add Orbits, Waves, or Rosette. Drag a graphic on the paper to place it. Text reflows while you drag. A lighter printed proof updates during movement, then the full-resolution print replaces it after release. All ink effects remain enabled throughout; processing never flashes plain text. Press Escape to cancel a drag. Adjust Size, Detail, Line weight, and Text gap. Arrow keys move a focused graphic; Shift moves it farther. Duplicate or remove graphics from the same panel. A document can contain up to eight graphics.
+- Open **Graphics** and browse **Science**, **Math**, or **Animals**. Science includes orbits, a celestial sphere, lens rays, magnetic field lines, and a pendulum. Math includes Lissajous curves, logarithmic spirals, sine waves, bell curves, waves, and rosettes. Animals includes an elephant, antelope, demoiselle crane, jackal, Nicobar pigeon, and lobster. Drag a graphic on the paper to place it. Text reflows while you drag. A lighter printed proof updates during movement, then the full-resolution print replaces it after release. All ink effects remain enabled throughout; processing never flashes plain text. Press Escape to cancel a drag. Adjust Size and Text gap for every graphic. Diagrams also have Detail and Line weight controls; engravings retain their original linework. Each engraving links to its archive source. Arrow keys move a focused graphic; Shift moves it farther. Duplicate or remove graphics from the same panel. A document can contain up to eight graphics.
 - Select letters or words in the editor to give them their own ink settings. **Keep clean** preserves their original outlines. **Reset ink** returns them to the document settings.
 - **New impression** changes ink placement while preserving custom selections. **Original** compares against the clean type.
 - Printed is the only rendering process. In **Effects**, choose a starting look: **Custom print**, **Book print**, or **Rough paper**. Book print and Rough paper run ocrodeg's complete original print presets; their built-in textures stay part of the starting look.
@@ -57,7 +57,7 @@ The renderer preserves shaped text runs, then overlays localized SVG ink diffusi
 
 Selection overrides live inside Quill's Delta as an inline `ink` attribute, so Quill maintains their position through edits and undo/redo. The clean text remains underneath the ink; soft alpha masks avoid hard clipping of letter edges.
 
-Graphics are deterministic SVG curves inside the same source ink layer as the text. The layout subtracts their circular contours from each text row, allowing text on either side of a graphic placed inside a paragraph. Pretext prepares and caches rich-text font measurements, then lays out each available interval as graphics move. Formatting and source selection offsets stay attached to the original Quill glyphs. A measurement-only whitespace adapter preserves repeated spaces; tabs use four spaces. Font loading invalidates measurement caches. Graphics receive document ink diffusion and every print effect; selection-specific overrides still apply only to text. Their positions and settings save with the document. Drag targets follow the geometric transformation of the print, including page turns and waves. Selection frames never appear in exports.
+Graphics are deterministic SVG curves or locally bundled historical engravings inside the same source ink layer as the text. Fine engraving strokes use reduced ink spread to preserve their crosshatching. Engravings lose their scanned paper through an SVG alpha filter and are embedded into the proof before printing or exporting. Their corners stay inside the wrap circle, preserving clearance around the entire image. See [graphics sources](docs/graphics-sources.md) for asset provenance and rights. The layout subtracts their circular contours from each text row, allowing text on either side of a graphic placed inside a paragraph. Pretext prepares and caches rich-text font measurements, then lays out each available interval as graphics move. Formatting and source selection offsets stay attached to the original Quill glyphs. A measurement-only whitespace adapter preserves repeated spaces; tabs use four spaces. Font loading invalidates measurement caches. Graphics receive document ink diffusion and every print effect; selection-specific overrides still apply only to text. Their positions and settings save with the document. Drag targets follow the geometric transformation of the print, including page turns and waves. Selection frames never appear in exports.
 
 The PNG export embeds the selected bundled font before rasterizing. Georgia uses the system's installed serif font. The initial proof is 720 × 900 units and grows vertically with the text. Ink editing and export run in the browser. Latin font subsets are bundled; other scripts use the browser's serif fallback. This first version uses left-to-right line layout.
 
@@ -109,6 +109,8 @@ Upstream credit: ocrodeg by Thomas Breuel / NVIDIA. The upstream source is not b
 
 
 ## Verification
+
+Graphic export checks run at `/tests/graphics.html` while the development server is running. They check all bundled engravings, transparent scan paper, print masks, mixed artwork, print effects, and PNG transparency.
 
 `npm test` covers seeded ink, saved-setting compatibility, control limits, preset resets, output dimensions, graphic persistence, overlapping graphic contours. Open `/tests/pretext.html` on the Vite development server for real-font browser checks of Pretext wrapping, spaces, tabs, Unicode graphemes, mixed styles, cache reuse, actual SVG line widths, transparent interactive printing, and transformed selections. `npm run build` type-checks and builds the browser worker.
 

@@ -1,0 +1,176 @@
+[
+  {
+    "name": "elephant.jpg",
+    "dimensions": [
+      1059,
+      951
+    ],
+    "upstreamOriginalDimensions": [
+      1059,
+      951
+    ],
+    "downloadVersion": "original",
+    "filePage": "https://commons.wikimedia.org/wiki/File:SFR_b%2Bw_-_elephant.jpg",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/6/60/SFR_b%2Bw_-_elephant.jpg",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/6/60/SFR_b%2Bw_-_elephant.jpg",
+    "artist": "Unknown artist",
+    "book": "Johann David Wyss (translated into English by the family of William Henry Giles Kingston), The Swiss Family Robinson, George Routledge and Sons, Limited, 1891, p. 408.",
+    "date": "published 1891",
+    "license": "Public domain in the United States (PD-US)",
+    "rightsStatement": "This media file is in the public domain in the United States. The source also cautions that status outside the United States may differ.",
+    "rightsEvidence": {
+      "LicenseShortName": "Public domain",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "Permission": "This image might not be in the public domain outside of the United States; this especially applies in the countries and areas that do not apply the <a href=\"https://en.wikipedia.org/wiki/rule_of_the_shorter_term\" class=\"extiw\" title=\"w:rule of the shorter term\">rule of the shorter term</a> for US works, such as Canada, Mainland China (not Hong Kong or Macao), Germany, Mexico, and Switzerland. The creator and year of publication are essential information and must be provided. See <a href=\"https://en.wikipedia.org/wiki/Wikipedia:Public_domain\" class=\"extiw\" title=\"w:Wikipedia:Public domain\">Wikipedia:Public domain</a> and <a href=\"https://en.wikipedia.org/wiki/Wikipedia:Copyrights\" class=\"extiw\" title=\"w:Wikipedia:Copyrights\">Wikipedia:Copyrights</a> for more details."
+    },
+    "modifiedLocally": false,
+    "sha256": "20a53699feee768421aededf6d0f890f2555adacb0204f6918c3aa06352206ea",
+    "bundledFile": "public/engravings/elephant.jpg"
+  },
+  {
+    "name": "antelope.jpg",
+    "dimensions": [
+      977,
+      1051
+    ],
+    "upstreamOriginalDimensions": [
+      977,
+      1051
+    ],
+    "downloadVersion": "original",
+    "filePage": "https://commons.wikimedia.org/wiki/File:SFR_b%2Bw_-_antelope.jpg",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d0/SFR_b%2Bw_-_antelope.jpg",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d0/SFR_b%2Bw_-_antelope.jpg",
+    "artist": "unknown artists",
+    "book": "Johann David Wyss (translated into English by the family of William Henry Giles Kingston), The Swiss Family Robinson, George Routledge and Sons, Limited, 1891, p. 353.",
+    "date": "published 1891",
+    "license": "Public domain in the United States (PD-US)",
+    "rightsStatement": "This media file is in the public domain in the United States. The source also cautions that status outside the United States may differ.",
+    "rightsEvidence": {
+      "LicenseShortName": "Public domain",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "Permission": "This image might not be in the public domain outside of the United States; this especially applies in the countries and areas that do not apply the <a href=\"https://en.wikipedia.org/wiki/rule_of_the_shorter_term\" class=\"extiw\" title=\"w:rule of the shorter term\">rule of the shorter term</a> for US works, such as Canada, Mainland China (not Hong Kong or Macao), Germany, Mexico, and Switzerland. The creator and year of publication are essential information and must be provided. See <a href=\"https://en.wikipedia.org/wiki/Wikipedia:Public_domain\" class=\"extiw\" title=\"w:Wikipedia:Public domain\">Wikipedia:Public domain</a> and <a href=\"https://en.wikipedia.org/wiki/Wikipedia:Copyrights\" class=\"extiw\" title=\"w:Wikipedia:Copyrights\">Wikipedia:Copyrights</a> for more details."
+    },
+    "modifiedLocally": false,
+    "sha256": "e1fae7bcd0f085fc12727482ed1b1cd2c7917037406746089a352d8489f44868",
+    "bundledFile": "public/engravings/antelope.jpg"
+  },
+  {
+    "name": "lobster.jpg",
+    "dimensions": [
+      1013,
+      749
+    ],
+    "upstreamOriginalDimensions": [
+      1013,
+      749
+    ],
+    "downloadVersion": "original",
+    "filePage": "https://commons.wikimedia.org/wiki/File:SFR_b%2Bw_-_lobster.jpg",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/e/eb/SFR_b%2Bw_-_lobster.jpg",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/e/eb/SFR_b%2Bw_-_lobster.jpg",
+    "artist": "Unknown artist",
+    "book": "Johann David Wyss (translated into English by the family of William Henry Giles Kingston), The Swiss Family Robinson, George Routledge and Sons, Limited, 1891, p. 16.",
+    "date": "published 1891",
+    "license": "Public domain in the United States (PD-US)",
+    "rightsStatement": "This media file is in the public domain in the United States. The source also cautions that status outside the United States may differ.",
+    "rightsEvidence": {
+      "LicenseShortName": "Public domain",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "Permission": "This image might not be in the public domain outside of the United States; this especially applies in the countries and areas that do not apply the <a href=\"https://en.wikipedia.org/wiki/rule_of_the_shorter_term\" class=\"extiw\" title=\"w:rule of the shorter term\">rule of the shorter term</a> for US works, such as Canada, Mainland China (not Hong Kong or Macao), Germany, Mexico, and Switzerland. The creator and year of publication are essential information and must be provided. See <a href=\"https://en.wikipedia.org/wiki/Wikipedia:Public_domain\" class=\"extiw\" title=\"w:Wikipedia:Public domain\">Wikipedia:Public domain</a> and <a href=\"https://en.wikipedia.org/wiki/Wikipedia:Copyrights\" class=\"extiw\" title=\"w:Wikipedia:Copyrights\">Wikipedia:Copyrights</a> for more details."
+    },
+    "modifiedLocally": false,
+    "sha256": "9770d0f7e9f4b91474ba2aed24756036988a27f1478ca072e6fa617f8ae8a5d6",
+    "bundledFile": "public/engravings/lobster.jpg"
+  },
+  {
+    "name": "jackal-960.jpg",
+    "dimensions": [
+      960,
+      833
+    ],
+    "upstreamOriginalDimensions": [
+      725,
+      629
+    ],
+    "downloadVersion": "archive thumbnail, upscaled by archive from 725x629",
+    "filePage": "https://commons.wikimedia.org/wiki/File:SFR_b%2Bw_-_young_jackal.jpg",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/5/5c/SFR_b%2Bw_-_young_jackal.jpg",
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5c/SFR_b%2Bw_-_young_jackal.jpg/960px-SFR_b%2Bw_-_young_jackal.jpg",
+    "artist": "Unknown artist",
+    "book": "Johann David Wyss (translated into English by the family of William Henry Giles Kingston), The Swiss Family Robinson, George Routledge and Sons, Limited, 1891, p. 198.",
+    "date": "published 1891",
+    "license": "Public domain in the United States (PD-US)",
+    "rightsStatement": "This media file is in the public domain in the United States. The source also cautions that status outside the United States may differ.",
+    "rightsEvidence": {
+      "LicenseShortName": "Public domain",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "Permission": "This image might not be in the public domain outside of the United States; this especially applies in the countries and areas that do not apply the <a href=\"https://en.wikipedia.org/wiki/rule_of_the_shorter_term\" class=\"extiw\" title=\"w:rule of the shorter term\">rule of the shorter term</a> for US works, such as Canada, Mainland China (not Hong Kong or Macao), Germany, Mexico, and Switzerland. The creator and year of publication are essential information and must be provided. See <a href=\"https://en.wikipedia.org/wiki/Wikipedia:Public_domain\" class=\"extiw\" title=\"w:Wikipedia:Public domain\">Wikipedia:Public domain</a> and <a href=\"https://en.wikipedia.org/wiki/Wikipedia:Copyrights\" class=\"extiw\" title=\"w:Wikipedia:Copyrights\">Wikipedia:Copyrights</a> for more details."
+    },
+    "modifiedLocally": false,
+    "sha256": "0ef1b698b450cf19cc41225de71f35c4383059e37ff66285b33f3ae544f05255",
+    "bundledFile": "public/engravings/jackal.jpg"
+  },
+  {
+    "name": "crane-960.jpg",
+    "dimensions": [
+      960,
+      1279
+    ],
+    "upstreamOriginalDimensions": [
+      719,
+      958
+    ],
+    "downloadVersion": "archive thumbnail, upscaled by archive from 719x958",
+    "filePage": "https://commons.wikimedia.org/wiki/File:SFR_b%2Bw_-_demoiselle_crane.jpg",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/4/45/SFR_b%2Bw_-_demoiselle_crane.jpg",
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/45/SFR_b%2Bw_-_demoiselle_crane.jpg/960px-SFR_b%2Bw_-_demoiselle_crane.jpg",
+    "artist": "Unknown artist",
+    "book": "Johann David Wyss (translated into English by the family of William Henry Giles Kingston), The Swiss Family Robinson, George Routledge and Sons, Limited, 1891, p. 403.",
+    "date": "published 1891",
+    "license": "Public domain in the United States (PD-US)",
+    "rightsStatement": "This media file is in the public domain in the United States. The source also cautions that status outside the United States may differ.",
+    "rightsEvidence": {
+      "LicenseShortName": "Public domain",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "Permission": "This image might not be in the public domain outside of the United States; this especially applies in the countries and areas that do not apply the <a href=\"https://en.wikipedia.org/wiki/rule_of_the_shorter_term\" class=\"extiw\" title=\"w:rule of the shorter term\">rule of the shorter term</a> for US works, such as Canada, Mainland China (not Hong Kong or Macao), Germany, Mexico, and Switzerland. The creator and year of publication are essential information and must be provided. See <a href=\"https://en.wikipedia.org/wiki/Wikipedia:Public_domain\" class=\"extiw\" title=\"w:Wikipedia:Public domain\">Wikipedia:Public domain</a> and <a href=\"https://en.wikipedia.org/wiki/Wikipedia:Copyrights\" class=\"extiw\" title=\"w:Wikipedia:Copyrights\">Wikipedia:Copyrights</a> for more details."
+    },
+    "modifiedLocally": false,
+    "sha256": "21086be1da232b70b039e1ad8e47daea97d96a40e8751bc0c4981064d14a2822",
+    "bundledFile": "public/engravings/crane.jpg"
+  },
+  {
+    "name": "pigeon-1280.jpg",
+    "dimensions": [
+      1280,
+      764
+    ],
+    "upstreamOriginalDimensions": [
+      1924,
+      1149
+    ],
+    "downloadVersion": "archive thumbnail, downscaled by archive from 1924x1149",
+    "filePage": "https://commons.wikimedia.org/wiki/File:SFR_b%2Bw_-_Nicobar_pigeon.jpg",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/e/e7/SFR_b%2Bw_-_Nicobar_pigeon.jpg",
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e7/SFR_b%2Bw_-_Nicobar_pigeon.jpg/1280px-SFR_b%2Bw_-_Nicobar_pigeon.jpg",
+    "artist": "W. Coleman and another",
+    "book": "Johann David Wyss (translated into English by the family of William Henry Giles Kingston), The Swiss Family Robinson, George Routledge and Sons, Limited, 1891, p. 271.",
+    "date": "published 1891",
+    "license": "Public domain in the United States (PD-US)",
+    "rightsStatement": "This media file is in the public domain in the United States. The source also cautions that status outside the United States may differ.",
+    "rightsEvidence": {
+      "LicenseShortName": "Public domain",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "Permission": "This image might not be in the public domain outside of the United States; this especially applies in the countries and areas that do not apply the <a href=\"https://en.wikipedia.org/wiki/rule_of_the_shorter_term\" class=\"extiw\" title=\"w:rule of the shorter term\">rule of the shorter term</a> for US works, such as Canada, Mainland China (not Hong Kong or Macao), Germany, Mexico, and Switzerland. The creator and year of publication are essential information and must be provided. See <a href=\"https://en.wikipedia.org/wiki/Wikipedia:Public_domain\" class=\"extiw\" title=\"w:Wikipedia:Public domain\">Wikipedia:Public domain</a> and <a href=\"https://en.wikipedia.org/wiki/Wikipedia:Copyrights\" class=\"extiw\" title=\"w:Wikipedia:Copyrights\">Wikipedia:Copyrights</a> for more details."
+    },
+    "modifiedLocally": false,
+    "sha256": "a57a2148407572cff64b909689017cac0d4dde1394c23c77bcac90c3ace3d127",
+    "bundledFile": "public/engravings/pigeon.jpg"
+  }
+]

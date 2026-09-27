@@ -1,4 +1,7 @@
-export const graphicKinds = { orbit: 'Orbits', waves: 'Waves', rosette: 'Rosette' } as const;
+import { animalArt, isAnimal, type AnimalKind } from './animal-art';
+import { diagramKinds, diagramCategories, diagramPaths, diagramLabels } from './diagrams';
+export const graphicKinds = { ...diagramKinds, ...Object.fromEntries(Object.entries(animalArt).map(([key, value]) => [key, value.label])) as Record<AnimalKind, string> };
+export const graphicCategories = { ...diagramCategories, ...Object.fromEntries(Object.keys(animalArt).map(key => [key, 'animals'])) as Record<AnimalKind, 'animals'> };
 export type GraphicKind = keyof typeof graphicKinds;
 export type Graphic = { id: string; kind: GraphicKind; x: number; y: number; size: number; lines: number; weight: number; gap: number };
 export type GraphicBox = { x: number; y: number; width: number; height: number };
@@ -20,33 +23,12 @@ export function moveGraphic(g: Graphic, x: number, y: number, height: number): v
   g.y = Math.max(72, Math.min(Math.max(72, height - 72 - g.size), y));
 }
 export function makeGraphic(kind: GraphicKind, index = 0): Graphic {
-  return { id: crypto.randomUUID(), kind, x: index % 2 ? 90 : 410, y: 265 + index * 60, size: 220, lines: 5, weight: 1.2, gap: 18 };
+  const size = isAnimal(kind) ? 280 : 220;
+  return { id: crypto.randomUUID(), kind, x: index % 2 ? 90 : 630 - size, y: 265 + index * 60, size, lines: 5, weight: 1.2, gap: 18 };
 }
 /** All artwork lives inside a circle, so the wrap contour remains predictable. */
-export function graphicPaths(g: Pick<Graphic, 'kind' | 'lines'>): string[] {
-  const tau = Math.PI * 2;
-  const line = (sample: (t: number) => [number, number], turns = 1) => Array.from({ length: 241 }, (_, i) => {
-    const [x, y] = sample(i / 240 * tau * turns);
-    return `${i ? 'L' : 'M'}${(50 + x).toFixed(3)},${(50 + y).toFixed(3)}`;
-  }).join(' ');
-  const ellipse = (rx: number, ry: number, angle: number) => line(t => {
-    const x = rx * Math.cos(t), y = ry * Math.sin(t);
-    return [x * Math.cos(angle) - y * Math.sin(angle), x * Math.sin(angle) + y * Math.cos(angle)];
-  });
-  if (g.kind === 'orbit') return [
-    ...Array.from({ length: g.lines }, (_, i) => ellipse(44, 15 + i * 1.3, i * Math.PI / g.lines - .3)),
-    ellipse(8, 8, 0),
-    'M47 50 L53 50 M50 47 L50 53',
-  ];
-  if (g.kind === 'waves') return Array.from({ length: g.lines }, (_, i) => line(t => {
-    const r = 13 + i * (29 / Math.max(1, g.lines - 1)) + 2.4 * Math.sin(5 * t + i * .75);
-    return [r * Math.cos(t), r * Math.sin(t)];
-  }));
-  return [line(t => {
-    const r = 30 + 13 * Math.cos(g.lines * t);
-    return [r * Math.cos(t), r * Math.sin(t)];
-  }), ellipse(10, 10, 0), ellipse(45, 45, 0)];
-}
+export function graphicPaths(g: Pick<Graphic, 'kind' | 'lines'>): string[] { return isAnimal(g.kind) ? [] : diagramPaths({ ...g, kind: g.kind }); }
+let artSequence = 0;
 export function graphicSvg(g: Pick<Graphic, 'kind' | 'lines' | 'weight'>, color = 'currentColor') {
   const node = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   node.setAttribute('viewBox', '0 0 100 100');
@@ -54,8 +36,31 @@ export function graphicSvg(g: Pick<Graphic, 'kind' | 'lines' | 'weight'>, color 
   node.setAttribute('stroke-width', String(g.weight));
   node.setAttribute('stroke-linecap', 'round'); node.setAttribute('stroke-linejoin', 'round');
   node.setAttribute('aria-hidden', 'true');
+  if (isAnimal(g.kind)) {
+    const art = animalArt[g.kind], ratio = art.width / art.height;
+    // Fit the entire rectangle inside the wrapping circle, including its corners.
+    const height = 88 / Math.sqrt(ratio * ratio + 1), width = height * ratio;
+    const id = `engraving-${++artSequence}`;
+    const make = (tag: string, attrs: Record<string,string>) => { const el = document.createElementNS(node.namespaceURI, tag); for (const [key,value] of Object.entries(attrs)) el.setAttribute(key,value); return el; };
+    const defs = make('defs', {}), filter = make('filter', { id, x:'0', y:'0', width:'100%', height:'100%', 'color-interpolation-filters':'sRGB' });
+    // Treat paper as transparency and retain the original engraving's ink density.
+    filter.append(make('feColorMatrix', { type:'matrix', values:'0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -.2126 -.7152 -.0722 0 1' }));
+    const contrast = make('feComponentTransfer', { result:'engraved-ink' });
+    contrast.append(make('feFuncA', { type:'linear', slope:'1.25', intercept:'-.12' }));
+    filter.append(contrast, make('feFlood', { 'flood-color':color }), make('feComposite', { in2:'engraved-ink', operator:'in' }));
+    defs.append(filter);
+    const image = make('image', { href:art.file, x:String(50-width/2), y:String(50-height/2), width:String(width), height:String(height), filter:`url(#${id})` });
+    node.append(defs, image); return node;
+  }
   for (const d of graphicPaths(g)) {
     const path = document.createElementNS(node.namespaceURI, 'path'); path.setAttribute('d', d); node.append(path);
+  }
+  for (const label of diagramLabels(g.kind)) {
+    const text = document.createElementNS(node.namespaceURI, 'text');
+    text.setAttribute('x',String(label.x)); text.setAttribute('y',String(label.y));
+    text.setAttribute('stroke','none'); text.setAttribute('fill',color);
+    text.setAttribute('font-family','Georgia, serif'); text.setAttribute('font-size','6'); text.setAttribute('font-style','italic'); text.setAttribute('text-anchor','middle');
+    text.textContent=label.text; node.append(text);
   }
   return node;
 }

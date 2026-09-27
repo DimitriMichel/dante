@@ -3,6 +3,7 @@
 The Impression Personal Use License applies to original Impression code and
 material. It does not replace or restrict the licenses of third-party components.
 
+- **Historical animal engravings:** 1891 book illustrations via Wikimedia Commons, declared public domain in the United States. See [graphics sources](docs/graphics-sources.md) and the archive records for the full rights statements. Impression's license does not restrict these images.
 - **Bundled serif fonts:** upstream license texts are in
   [public/font-licenses](public/font-licenses). Keep these notices with the fonts.
 - **Pretext (`@chenglou/pretext` 0.0.9):** MIT, copyright 2026 Pretext contributors.

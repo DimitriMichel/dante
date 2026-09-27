@@ -1,3 +1,4 @@
+import { isAnimal } from './animal-art';
 import { inkWalk, inkSetting } from './ink';
 import { graphicSvg, type Graphic } from './graphics';
 import { wrapParagraph, prepareParagraph, clearFlowCache, displayGlyph } from './flow';
@@ -113,18 +114,25 @@ export class InkRenderer {
       if (paragraph.attrs.header) baseline += options.size * .35;
     }
     const graphics = svg('g', { id: 'graphic-source', fill: 'none' });
+    const diagrams = svg('g', { id: 'diagram-source' }), engravings = svg('g', { id: 'engraving-source' });
+    graphics.append(diagrams, engravings);
     for (const graphic of options.graphics || []) {
       const drawing = graphicSvg({ ...graphic, weight: graphic.weight * 100 / graphic.size });
       drawing.setAttribute('x', String(graphic.x)); drawing.setAttribute('y', String(graphic.y));
       drawing.setAttribute('width', String(graphic.size)); drawing.setAttribute('height', String(graphic.size));
-      graphics.append(drawing);
+      (isAnimal(graphic.kind) ? engravings : diagrams).append(drawing);
     }
     source.append(graphics);
     this.height = Math.max(900, baseline + padding + options.size * .4, ...(options.graphics || []).map(g => g.y + g.size + padding));
     const height = this.height;
-    if (!options.original && options.spread > 0 && graphics.children.length) {
-      defs.append(filterFor('graphics', options.spread / 100, options.variation / 100, width, height));
-      layers.append(svg('use', { href: '#graphic-source', filter: 'url(#ink-filter-graphics)' }));
+    if (!options.original && options.spread > 0) {
+      // Engraving hatching is much finer than diagram lines or text stems.
+      // Scale its spread so the same controls preserve those small gaps.
+      for (const [group, strength] of [[diagrams, 1], [engravings, .25]] as const) {
+        if (!group.children.length) continue;
+        defs.append(filterFor(group.id, options.spread / 100 * strength, options.variation / 100, width, height));
+        layers.append(svg('use', { href: `#${group.id}`, filter: `url(#ink-filter-${group.id})`, opacity: group === engravings ? options.spread / 200 : 1 }));
+      }
     }
     this.root.setAttribute('viewBox', `0 0 ${width} ${height}`);
     this.root.setAttribute('width', String(width)); this.root.setAttribute('height', String(height));
