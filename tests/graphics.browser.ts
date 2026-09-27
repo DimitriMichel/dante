@@ -1,6 +1,6 @@
 import { fontOptions } from '../src/fonts';
 import { InkRenderer } from '../src/render';
-import { animalArt, type AnimalKind } from '../src/animal-art';
+import { engravingArt, type EngravingKind } from '../src/engraving-art';
 import { PrintEngine } from '../src/print-engine';
 import { printDefaults } from '../src/print-settings';
 import { rasterizeProof } from '../src/export';
@@ -15,22 +15,23 @@ const graphic: Graphic = { id: 'engraving-qa', kind: 'elephant', x: 220, y: 220,
 const options = { family: fontOptions.garamond.family, size: 28, leading: 1.5, spread: 0, variation: 30, seed: 55, paper: 'none', original: true, graphics: [graphic] };
 try {
   await document.fonts.load('28px \"EB Garamond\"');
-  for (const kind of Object.keys(animalArt) as AnimalKind[]) {
+  for (const kind of Object.keys(engravingArt) as EngravingKind[]) {
     graphic.kind = kind;
     renderer.render([{ insert: '\n' }], options);
     const rgba = await rasterizeProof(renderer.root, renderer.width, renderer.height, 'garamond', 'EB Garamond', 1);
     const pixels = rgba.getContext('2d')!.getImageData(0, 0, rgba.width, rgba.height).data;
-    let ink = 0, visible = 0;
-    for (let i = 0; i < pixels.length; i += 4) { if (pixels[i + 3] > 128) ink++; if (pixels[i + 3] > 0) visible++; }
-    check(ink > 1000, `${kind} missing from rasterized export`);
+    let ink = 0, visible = 0, alphaMass = 0;
+    for (let i = 0; i < pixels.length; i += 4) { if (pixels[i + 3] > 128) ink++; if (pixels[i + 3] > 0) visible++; alphaMass += pixels[i + 3] / 255; }
+    // Measure coverage, including fine gray lines, instead of requiring solid black areas.
+    check(alphaMass > 80, `${kind} missing from rasterized export`);
     check(visible < graphic.size * graphic.size * .55, `${kind} has an opaque scan background`);
     check(pixels[3] === 0, `${kind} lost transparent page`);
     const mask = await rasterizeProof(renderer.root, renderer.width, renderer.height, 'garamond', 'EB Garamond', 1, true);
     const maskPixels = mask.getContext('2d')!.getImageData(0, 0, mask.width, mask.height).data;
-    let dark = 0;
-    for (let i = 0; i < maskPixels.length; i += 4) if (maskPixels[i] < 128 && maskPixels[i + 3] === 255) dark++;
-    check(dark > 1000 && Math.abs(dark - ink) / ink < .05, `${kind} missing or changed in print mask`);
-    results.push({ name: `${animalArt[kind].label}: embedded image, transparent scan paper, print mask`, detail: { ink, visible, dark } });
+    let dark = 0, maskMass = 0;
+    for (let i = 0; i < maskPixels.length; i += 4) { if (maskPixels[i] < 128 && maskPixels[i + 3] === 255) dark++; maskMass += (255 - maskPixels[i]) / 255; }
+    check(maskMass > 80 && Math.abs(maskMass - alphaMass) < Math.max(20, alphaMass * .03), `${kind} missing or changed in print mask: alpha=${alphaMass}, mask=${maskMass}`);
+    results.push({ name: `${engravingArt[kind].label}: embedded image, transparent scan paper, print mask`, detail: { ink, visible, dark, alphaMass, maskMass } });
   }
   graphic.kind = 'elephant';
   const mixed: Graphic[] = [{...graphic, id: 'orbit', kind: 'orbit', x: 256, y: 177, size: 220}, {...graphic, id: 'waves', kind: 'waves', x: 90, y: 325, size: 220}, {...graphic, x: 350, y: 385}];

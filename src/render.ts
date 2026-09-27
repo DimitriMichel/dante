@@ -1,4 +1,4 @@
-import { isAnimal } from './animal-art';
+import { isEngraving } from './engraving-art';
 import { inkWalk, inkSetting } from './ink';
 import { graphicSvg, type Graphic } from './graphics';
 import { wrapParagraph, prepareParagraph, clearFlowCache, displayGlyph } from './flow';
@@ -120,7 +120,7 @@ export class InkRenderer {
       const drawing = graphicSvg({ ...graphic, weight: graphic.weight * 100 / graphic.size });
       drawing.setAttribute('x', String(graphic.x)); drawing.setAttribute('y', String(graphic.y));
       drawing.setAttribute('width', String(graphic.size)); drawing.setAttribute('height', String(graphic.size));
-      (isAnimal(graphic.kind) ? engravings : diagrams).append(drawing);
+      (isEngraving(graphic.kind) ? engravings : diagrams).append(drawing);
     }
     source.append(graphics);
     this.height = Math.max(900, baseline + padding + options.size * .4, ...(options.graphics || []).map(g => g.y + g.size + padding));

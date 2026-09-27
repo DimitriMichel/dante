@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { textSlots } from './flow';
 import { diagramKinds, diagramLabels, type DiagramKind } from './diagrams';
-import { animalArt } from './animal-art';
+import { engravingArt } from './engraving-art';
 import { readGraphics, graphicPaths, type Graphic } from './graphics';
 const graphic: Graphic = { id: 'one', kind: 'orbit', x: 250, y: 150, size: 220, lines: 5, weight: 1.2, gap: 18 };
 test('middle graphics leave text space on both sides and restore full width below', () => {
@@ -34,12 +34,12 @@ test('all graphic paths are deterministic, finite, and contained by the wrapping
 });
 
 test('all library entries persist and labels stay inside the wrap contour', () => {
-  for (const kind of [...Object.keys(diagramKinds), ...Object.keys(animalArt)]) {
+  for (const kind of [...Object.keys(diagramKinds), ...Object.keys(engravingArt)]) {
     const [saved] = readGraphics([{...graphic, kind}]);
     assert.equal(saved.kind, kind);
   }
   for (const kind of Object.keys(diagramKinds) as DiagramKind[]) for (const label of diagramLabels(kind)) assert.ok(Math.hypot(label.x-50,label.y-50)<45);
-  for (const art of Object.values(animalArt)) {
+  for (const art of Object.values(engravingArt)) {
     const ratio = art.width/art.height, h=88/Math.sqrt(ratio*ratio+1);
     assert.ok(Math.hypot(h*ratio/2,h/2)<=44.001);
   }

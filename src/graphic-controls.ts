@@ -1,11 +1,10 @@
-import { animalArt, isAnimal } from './animal-art';
-import { graphicKinds, graphicCategories, graphicSvg, makeGraphic, moveGraphic, type Graphic, type GraphicKind, type GraphicPlacement } from './graphics';
+import { engravingArt, isEngraving } from './engraving-art';
+import { graphicKinds, graphicCategories, graphicCategoryLabels, graphicSvg, makeGraphic, moveGraphic, type Graphic, type GraphicKind, type GraphicPlacement } from './graphics';
 export const graphicsMarkup = `
-  <div class="graphics-intro"><h2>Graphics</h2><p>Science, mathematics, and natural history.</p></div>
-  <div class="graphic-categories" role="group" aria-label="Graphic category">
-    <button type="button" data-graphic-category="science" aria-pressed="true">Science</button>
-    <button type="button" data-graphic-category="math" aria-pressed="false">Math</button>
-    <button type="button" data-graphic-category="animals" aria-pressed="false">Animals</button>
+  <div class="graphics-intro"><h2>Graphics</h2><p>Diagrams, engravings, and the art of the printed page.</p></div>
+  <div class="graphic-field graphic-category-field">
+    <div class="graphic-category-label"><label for="graphic-category">Collection</label><span id="graphic-count" aria-live="polite"></span></div>
+    <select id="graphic-category">${Object.entries(graphicCategoryLabels).map(([key, label]) => `<option value="${key}">${label}</option>`).join('')}</select>
   </div>
   <div class="graphic-gallery" aria-label="Add a graphic">${Object.entries(graphicKinds).map(([kind, name]) => `<button type="button" data-add-graphic="${kind}" data-category="${graphicCategories[kind as GraphicKind]}" aria-label="Add ${name.toLowerCase()}" ${graphicCategories[kind as GraphicKind] !== 'science' ? 'hidden' : ''}><span class="graphic-sample"></span><span>${name}</span></button>`).join('')}</div>
   <div id="graphic-editor" hidden>
@@ -23,12 +22,22 @@ export class GraphicControls {
   dragging = false;
   private readonly buttons = new Map<string, HTMLButtonElement>();
   constructor(private panel: HTMLElement, private overlay: HTMLElement, private graphics: () => Graphic[], private geometry: () => Geometry, private change: () => void, private open: () => void, private drag: (phase: 'start' | 'move' | 'end') => void) {
-    for (const category of panel.querySelectorAll<HTMLButtonElement>('[data-graphic-category]')) category.addEventListener('click', () => {
-      panel.querySelectorAll<HTMLButtonElement>('[data-graphic-category]').forEach(button => button.setAttribute('aria-pressed', String(button === category)));
-      panel.querySelectorAll<HTMLButtonElement>('[data-add-graphic]').forEach(button => { button.hidden = button.dataset.category !== category.dataset.graphicCategory; });
-    });
+    const category = panel.querySelector<HTMLSelectElement>('#graphic-category')!;
+    const showCategory = () => {
+      let count = 0;
+      panel.querySelectorAll<HTMLButtonElement>('[data-add-graphic]').forEach(button => {
+        button.hidden = button.dataset.category !== category.value;
+        if (button.hidden) return;
+        count++;
+        const sample = button.querySelector('.graphic-sample')!;
+        if (!sample.childElementCount) sample.append(graphicSvg({ kind: button.dataset.addGraphic as GraphicKind, lines: 5, weight: 1.1 }));
+      });
+      panel.querySelector('#graphic-count')!.textContent = `${count} graphics`;
+      panel.querySelector('.graphic-gallery')!.scrollTop = 0;
+    };
+    category.addEventListener('change', showCategory);
+    showCategory();
     for (const button of panel.querySelectorAll<HTMLButtonElement>('[data-add-graphic]')) {
-      button.querySelector('.graphic-sample')!.append(graphicSvg({ kind: button.dataset.addGraphic as GraphicKind, lines: 5, weight: 1.1 }));
       button.addEventListener('click', () => {
         const items = this.graphics();
         if (items.length >= 8) return;
@@ -73,14 +82,14 @@ export class GraphicControls {
     this.panel.querySelectorAll<HTMLButtonElement>('[data-add-graphic], #duplicate-graphic').forEach(button => button.disabled = items.length >= 8);
     const g = this.selected();
     const credit = this.panel.querySelector<HTMLElement>('#graphic-credit')!;
-    credit.hidden = !g || !isAnimal(g.kind);
+    credit.hidden = !g || !isEngraving(g.kind);
     credit.replaceChildren();
-    if (g && isAnimal(g.kind)) {
-      const art = animalArt[g.kind], link = document.createElement('a');
-      link.href = art.source; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = `Wood engraving · ${art.year}`;
+    if (g && isEngraving(g.kind)) {
+      const art = engravingArt[g.kind], link = document.createElement('a');
+      link.href = art.source; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = `Archive engraving · ${art.year}`;
       credit.append(link);
     }
-    this.panel.querySelectorAll<HTMLElement>('[data-graphic-setting]').forEach(row => { row.hidden = !!g && isAnimal(g.kind) && ['lines','weight'].includes(row.dataset.graphicSetting!); });
+    this.panel.querySelectorAll<HTMLElement>('[data-graphic-setting]').forEach(row => { row.hidden = !!g && isEngraving(g.kind) && ['lines','weight'].includes(row.dataset.graphicSetting!); });
     if (g) for (const key of ['size', 'lines', 'weight', 'gap'] as const) {
       const input = this.panel.querySelector<HTMLInputElement>(`#graphic-${key}`)!;
       input.value = String(g[key]);

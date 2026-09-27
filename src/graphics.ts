@@ -1,7 +1,8 @@
-import { animalArt, isAnimal, type AnimalKind } from './animal-art';
+import { engravingArt, isEngraving, type EngravingKind, type EngravingCategory } from './engraving-art';
 import { diagramKinds, diagramCategories, diagramPaths, diagramLabels } from './diagrams';
-export const graphicKinds = { ...diagramKinds, ...Object.fromEntries(Object.entries(animalArt).map(([key, value]) => [key, value.label])) as Record<AnimalKind, string> };
-export const graphicCategories = { ...diagramCategories, ...Object.fromEntries(Object.keys(animalArt).map(key => [key, 'animals'])) as Record<AnimalKind, 'animals'> };
+export const graphicKinds = { ...diagramKinds, ...Object.fromEntries(Object.entries(engravingArt).map(([key, value]) => [key, value.label])) as Record<EngravingKind, string> };
+export const graphicCategories = { ...diagramCategories, ...Object.fromEntries(Object.entries(engravingArt).map(([key, art]) => [key, art.category])) as Record<EngravingKind, EngravingCategory> };
+export const graphicCategoryLabels = { science: 'Science', math: 'Math', animals: 'Animals', botanical: 'Botanical', specimens: 'Insects & specimens', anatomy: 'Anatomy', instruments: 'Scientific instruments', celestial: 'Celestial', architecture: 'Architecture', machines: 'Machines & inventions', ornaments: 'Ornaments' } as const;
 export type GraphicKind = keyof typeof graphicKinds;
 export type Graphic = { id: string; kind: GraphicKind; x: number; y: number; size: number; lines: number; weight: number; gap: number };
 export type GraphicBox = { x: number; y: number; width: number; height: number };
@@ -23,11 +24,11 @@ export function moveGraphic(g: Graphic, x: number, y: number, height: number): v
   g.y = Math.max(72, Math.min(Math.max(72, height - 72 - g.size), y));
 }
 export function makeGraphic(kind: GraphicKind, index = 0): Graphic {
-  const size = isAnimal(kind) ? 280 : 220;
+  const size = isEngraving(kind) ? 280 : 220;
   return { id: crypto.randomUUID(), kind, x: index % 2 ? 90 : 630 - size, y: 265 + index * 60, size, lines: 5, weight: 1.2, gap: 18 };
 }
 /** All artwork lives inside a circle, so the wrap contour remains predictable. */
-export function graphicPaths(g: Pick<Graphic, 'kind' | 'lines'>): string[] { return isAnimal(g.kind) ? [] : diagramPaths({ ...g, kind: g.kind }); }
+export function graphicPaths(g: Pick<Graphic, 'kind' | 'lines'>): string[] { return isEngraving(g.kind) ? [] : diagramPaths({ ...g, kind: g.kind }); }
 let artSequence = 0;
 export function graphicSvg(g: Pick<Graphic, 'kind' | 'lines' | 'weight'>, color = 'currentColor') {
   const node = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -36,8 +37,8 @@ export function graphicSvg(g: Pick<Graphic, 'kind' | 'lines' | 'weight'>, color 
   node.setAttribute('stroke-width', String(g.weight));
   node.setAttribute('stroke-linecap', 'round'); node.setAttribute('stroke-linejoin', 'round');
   node.setAttribute('aria-hidden', 'true');
-  if (isAnimal(g.kind)) {
-    const art = animalArt[g.kind], ratio = art.width / art.height;
+  if (isEngraving(g.kind)) {
+    const art = engravingArt[g.kind], ratio = art.width / art.height;
     // Fit the entire rectangle inside the wrapping circle, including its corners.
     const height = 88 / Math.sqrt(ratio * ratio + 1), width = height * ratio;
     const id = `engraving-${++artSequence}`;
@@ -47,7 +48,7 @@ export function graphicSvg(g: Pick<Graphic, 'kind' | 'lines' | 'weight'>, color 
     filter.append(make('feColorMatrix', { type:'matrix', values:'0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -.2126 -.7152 -.0722 0 1' }));
     const contrast = make('feComponentTransfer', { result:'engraved-ink' });
     contrast.append(make('feFuncA', { type:'linear', slope:'1.25', intercept:'-.12' }));
-    filter.append(contrast, make('feFlood', { 'flood-color':color }), make('feComposite', { in2:'engraved-ink', operator:'in' }));
+    filter.append(contrast, make('feComposite', { in2:'SourceGraphic', operator:'in', result:'engraved-ink' }), make('feFlood', { 'flood-color':color }), make('feComposite', { in2:'engraved-ink', operator:'in' }));
     defs.append(filter);
     const image = make('image', { href:art.file, x:String(50-width/2), y:String(50-height/2), width:String(width), height:String(height), filter:`url(#${id})` });
     node.append(defs, image); return node;
