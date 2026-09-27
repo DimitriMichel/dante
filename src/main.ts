@@ -132,8 +132,9 @@ const printCanvas = $<HTMLCanvasElement>('#printed-proof');
 const printSheet = $('.proof-sheet');
 const printSelection = $<HTMLCanvasElement>('#print-selection');
 let desiredPrint: PrintJob | null = null, printedKey = '', failedPrintKey = '';
+let printedSize: { width: number; height: number } | null = null;
 let printTask: Promise<void> | null = null, printTimer = 0;
-const engine = new PrintEngine(message => { if (!original) $('#print-status').textContent = message; });
+const engine = new PrintEngine(message => { if (!original && printSheet.getAttribute('aria-busy') === 'true') $('#print-status').textContent = printedKey ? 'Updating print…' : message; });
 function showPrinted(show: boolean) {
   printCanvas.hidden = !show; printSheet.classList.toggle('has-print', show);
   printSelection.style.display = show ? 'block' : 'none';
@@ -147,7 +148,18 @@ function paintPrintSelection(mask: Uint8Array, width: number, height: number) {
   for (let i = 0; i < mask.length; i++) { rgba[i * 4] = 171; rgba[i * 4 + 1] = 132; rgba[i * 4 + 2] = 65; rgba[i * 4 + 3] = Math.round(mask[i] * .3); }
   printSelection.getContext('2d')!.putImageData(new ImageData(rgba, width, height), 0, 0);
 }
-function printReadyStatus() { $('#print-status').textContent = `Printed locally · ${printCanvas.width} × ${printCanvas.height}`; }
+function printReadyStatus() {
+  printSheet.setAttribute('aria-busy', 'false');
+  $('#print-retry').hidden = true;
+  $('#print-status').title = '';
+  $('#print-status').textContent = `Printed locally · ${printCanvas.width} × ${printCanvas.height}`;
+}
+function printFailedStatus() {
+  showPrinted(!!printedKey); showPrintSelection();
+  printSheet.setAttribute('aria-busy', 'false');
+  $('#print-status').textContent = printedKey ? 'Could not update · previous print shown' : 'Print unavailable · ink preview shown';
+  $('#print-retry').hidden = false;
+}
 async function ensurePrinted(): Promise<void> {
   clearTimeout(printTimer);
   if (printTask) return printTask;
@@ -161,14 +173,15 @@ async function ensurePrinted(): Promise<void> {
         printCanvas.width = proof.width; printCanvas.height = proof.height;
         printCanvas.getContext('2d')!.putImageData(new ImageData(proof.pixels as Uint8ClampedArray<ArrayBuffer>, proof.width, proof.height), 0, 0);
         paintPrintSelection(proof.selection, proof.width, proof.height);
-        printedKey = job.key;
-        if (!original) { showPrinted(true); showPrintSelection(); printReadyStatus(); }
+        printedKey = job.key; printedSize = { width: job.width, height: job.height };
+        if (!original) { showPrinted(true); showPrintSelection(); printReadyStatus(); updatePreviewScale(); }
       } catch (error) {
         failedPrintKey = job.key;
         if (desiredPrint?.key !== job.key) continue;
-        showPrinted(false); $('#print-status').textContent = 'Print unavailable · ink preview shown';
-        $('#print-status').title = error instanceof Error ? error.message : String(error);
-        $('#print-retry').hidden = false;
+        if (!original) {
+          printFailedStatus();
+          $('#print-status').title = error instanceof Error ? error.message : String(error);
+        }
         break;
       }
     }
@@ -177,21 +190,28 @@ async function ensurePrinted(): Promise<void> {
 }
 function queuePrinted(ops: Op[]) {
   showPrintSelection();
-  if (original) { showPrinted(false); $('#print-retry').hidden = true; $('#print-status').textContent = 'Original type'; return; }
+  if (original) { showPrinted(false); printSheet.setAttribute('aria-busy', 'false'); $('#print-retry').hidden = true; $('#print-status').textContent = 'Original type'; return; }
   const key = JSON.stringify([ops, state.font, state.size, state.leading, state.spread, state.variation, state.seed, state.paper, printSettings(state), selectionScope ? selection : null, fontRevision]);
-  if (printedKey === key) { showPrinted(true); printReadyStatus(); return; }
-  showPrinted(false);
-  if (desiredPrint?.key === key) {
-    if (failedPrintKey === key) { $('#print-status').textContent = 'Print unavailable · ink preview shown'; $('#print-retry').hidden = false; }
+  const alreadyQueued = desiredPrint?.key === key;
+  if (!alreadyQueued) desiredPrint = { ...state, selection: selectionScope && selection ? { ...selection } : null, key, root: renderer.root.cloneNode(true) as SVGSVGElement, width: renderer.width, height: renderer.height, cells: renderer.cells.map(cell => ({ ...cell, attrs: { ...cell.attrs } })), label: fontOptions[state.font].label };
+  if (printedKey === key) {
+    // Returning to the visible print cancels any newer result still in flight.
+    clearTimeout(printTimer);
+    showPrinted(true); showPrintSelection(); printReadyStatus(); return;
+  }
+  // Keep the last completed bitmap on screen throughout debounce and rendering.
+  showPrinted(!!printedKey); showPrintSelection();
+  printSheet.setAttribute('aria-busy', 'true');
+  if (alreadyQueued) {
+    if (failedPrintKey === key) printFailedStatus();
     else if (!printTask) { clearTimeout(printTimer); printTimer = window.setTimeout(() => void ensurePrinted(), 220); }
     return;
   }
-  desiredPrint = { ...state, selection: selectionScope && selection ? { ...selection } : null, key, root: renderer.root.cloneNode(true) as SVGSVGElement, width: renderer.width, height: renderer.height, cells: renderer.cells.map(cell => ({ ...cell, attrs: { ...cell.attrs } })), label: fontOptions[state.font].label };
   failedPrintKey = ''; $('#print-retry').hidden = true; $('#print-status').title = '';
-  $('#print-status').textContent = 'Preparing print…';
+  $('#print-status').textContent = printedKey ? 'Updating print…' : 'Preparing print…';
   clearTimeout(printTimer); printTimer = window.setTimeout(() => void ensurePrinted(), 220);
 }
-$('#print-retry').addEventListener('click', () => { failedPrintKey = ''; $('#print-retry').hidden = true; void ensurePrinted(); });
+$('#print-retry').addEventListener('click', () => { failedPrintKey = ''; $('#print-retry').hidden = true; printSheet.setAttribute('aria-busy', 'true'); void ensurePrinted(); });
 window.addEventListener('pagehide', () => engine.stop(), { once: true });
 function schedule() {
   cancelAnimationFrame(renderFrame);
@@ -334,9 +354,10 @@ function updatePreviewScale() {
   const availableWidth = stage.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
   const availableHeight = stage.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
   if (!availableWidth || !availableHeight) return;
-  if (zoomMode === 'page') zoom = Math.min(availableWidth / renderer.width, availableHeight / renderer.height);
-  if (zoomMode === 'width') zoom = availableWidth / renderer.width;
-  $('.paper-wrap').style.width = `${Math.max(1, renderer.width * zoom)}px`;
+  const page = !printCanvas.hidden && printedSize ? printedSize : renderer;
+  if (zoomMode === 'page') zoom = Math.min(availableWidth / page.width, availableHeight / page.height);
+  if (zoomMode === 'width') zoom = availableWidth / page.width;
+  $('.paper-wrap').style.width = `${Math.max(1, page.width * zoom)}px`;
   $('#zoom-value').textContent = `${Math.round(zoom * 100)}%`;
   $('#zoom-fit').setAttribute('aria-pressed', String(zoomMode === 'page'));
   $('#zoom-width').setAttribute('aria-pressed', String(zoomMode === 'width'));
