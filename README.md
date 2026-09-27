@@ -13,16 +13,18 @@ Open the local URL printed by Vite. `npm run build` creates the static app in `d
 
 ## Use
 
-- Write and format text in **Compose**. Choose EB Garamond, Libre Baskerville, Playfair Display, Bodoni Moda, Cormorant Garamond, Crimson Pro, Lora, or Georgia. The bundled families include regular, italic, bold, and bold italic.
-- Adjust **Ink spread** and **Unevenness** for the document.
+- Write and format text in the **Write** tab. Choose EB Garamond, Libre Baskerville, Playfair Display, Bodoni Moda, Cormorant Garamond, Crimson Pro, Lora, or Georgia. The bundled families include regular, italic, bold, and bold italic.
+- Open **Effects** to adjust **Ink spread** and **Unevenness** for the document. The sidebar scrolls independently so the preview stays visible.
 - Select letters or words in the editor to give them their own ink settings. **Keep clean** preserves their original outlines. **Reset ink** returns them to the document settings.
 - **New impression** changes ink placement while preserving custom selections. **Original** compares against the clean type.
-- Select **Process → Printed** and choose a starting look: **Custom print**, **Book print**, or **Rough paper**. Book print and Rough paper run ocrodeg's complete original print presets; their built-in textures stay part of the starting look.
+- In **Effects**, select **Process → Printed** and choose a starting look: **Custom print**, **Book print**, or **Rough paper**. Book print and Rough paper run ocrodeg's complete original print presets; their built-in textures stay part of the starting look.
 - **Ink & paper** controls dark ink texture, fading, missing ink, stray specks, and paper grain. Fading and wear are independent of ink texture. In Custom print, choose Paper fibers or Fine grain.
 - **Letter edges** controls rough, rounded, broken, and soft outlines.
 - **Page shape** controls wavy lines, crooked placement, tilt, width, size, position, and quarter turns. Page movement carries clean selections and their preview highlights along with the lettering.
 - **Reset effects** returns the chosen starting look to its defaults, preserving text, formatting, spread, and selection overrides. **Ink bleed** keeps the original renderer.
-- Choose Warm, White, Oat, Bright white, or Cool gray paper. Change spacing, alignment, or preview zoom. Export the current proof as a PNG at up to 2× resolution.
+- Choose Warm, White, Oat, Bright white, or Cool gray paper. On phones the paper colors are in Effects. Change spacing and alignment in Write. Export the current proof as a PNG at up to 2× resolution.
+- The preview opens at **Fit width** for inspecting ink. **Fit page** shows the entire sheet; **100%** shows actual size. Use the plus/minus buttons for 15–300% zoom, or click the percentage to return to 100%. Hide the sidebar with the button beside Preview for more room.
+- On narrow screens the preview stays above the Write/Effects panel. Tabs support arrow-key navigation, and selections survive switching panels.
 - The document saves in this browser on this device. There is no cloud document sync. Clearing browser storage removes the saved document.
 
 ## Rendering
