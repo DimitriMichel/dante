@@ -1,6 +1,28 @@
 # Impression
 
-A dark writing studio for serif type with natural, uneven ink bleed. Built with Vite, TypeScript, and Quill 2.
+**A little more human.**
+
+Impression turns clean digital type into something that looks printed: ink that spreads, edges that soften, and small imperfections that give each letter character. Write on the left, see the printed result on the right, and adjust the effects without losing sight of your last finished print.
+
+Built for serif typography, with rich text editing, selective ink treatments, repeatable randomness, and PNG export. All text and image processing stays in your browser.
+
+## Before and after
+
+The same text, before and after its print treatment:
+
+| Before | After |
+| --- | --- |
+| ![Clean serif text before print effects](docs/images/before.png) | ![The same text with uneven ink, rough edges, and paper texture](docs/images/after.png) |
+
+## What you can make
+
+- Soft ink spread or a heavily worn impression, with separate controls for texture, fading, and missing ink.
+- Different treatments for selected words, including letters kept completely clean.
+- Book-like and fibrous print textures, rough or rounded edges, and subtle page distortion.
+- Prints on five paper colors, or ink on a transparent background for use in other designs. The transparent option is the fourth swatch, marked with an X; its preview sits on white.
+- Repeatable results from a saved seed, plus **New impression** when you want another variation.
+
+Vite, TypeScript, and Quill power the studio. The print engine runs in a browser worker.
 
 ## Run locally
 
@@ -22,7 +44,7 @@ Open the local URL printed by Vite. `npm run build` creates the static app in `d
 - **Letter edges** controls rough, rounded, broken, and soft outlines.
 - **Page shape** controls wavy lines, crooked placement, tilt, width, size, position, and quarter turns. Page movement carries clean selections and their preview highlights along with the lettering.
 - **Reset effects** returns the chosen starting look to its defaults, preserving text, formatting, spread, and selection overrides.
-- Choose Warm, White, Oat, Bright white, or Cool gray paper. On phones the paper colors are in Effects. Change spacing and alignment in Write. Export the current proof as a PNG at up to 2× resolution.
+- Choose Warm, White, Oat, No paper, Bright white, or Cool gray. No paper removes the paper layer and exports transparency; the preview uses white behind it. Paper settings are kept when you switch back to a paper color. On phones the paper colors are in Effects. Change spacing and alignment in Write. Export the current proof as a PNG at up to 2× resolution.
 - The preview opens at **Fit width** for inspecting ink. **Fit page** shows the entire sheet; **100%** shows actual size. Use the plus/minus buttons for 15–300% zoom, or click the percentage to return to 100%. Hide the sidebar with the button beside Preview for more room.
 - On narrow screens the preview stays above the Write/Effects panel. Tabs support arrow-key navigation, and selections survive switching panels.
 - The document saves in this browser on this device. There is no cloud document sync. Clearing browser storage removes the saved document.
@@ -48,7 +70,7 @@ The bundled fonts retain their upstream licenses in their packages and in `publi
 
 The print renderer executes the actual [NVlabs/ocrodeg](https://github.com/NVlabs/ocrodeg) Python module inside [Pyodide](https://pyodide.org/en/stable/) in a module Web Worker. No GPU or server processing is required. First use downloads the pinned runtime, NumPy, SciPy, and upstream source; an internet connection is needed for that load. Text and image pixels stay in the browser.
 
-The worker connects the complete `printlike_multiscale` and `printlike_fibrous` helpers using their original default arguments. Custom print separately composes the upstream primitives with the existing shaped text mask. Book print and Rough paper match the upstream grayscale output before paper-color tinting, protection of explicit clean selections, and any extra effects the user enables. These presets already contain texture and blotches; use Custom print to control those individually.
+The worker connects the complete `printlike_multiscale` and `printlike_fibrous` helpers using their original default arguments. Custom print separately composes the upstream primitives with the existing shaped text mask. On colored paper, Book print and Rough paper match the upstream grayscale output before paper-color tinting, protection of explicit clean selections, and any extra effects the user enables. Transparent output composes upstream blotch and ink-texture primitives without a paper layer, preserving soft alpha edges and clean selections. These presets already contain texture and blotches; use Custom print to control those individually.
 
 | Visible setting | Implementation |
 | --- | --- |
@@ -83,7 +105,7 @@ Upstream credit: ocrodeg by Thomas Breuel / NVIDIA. The upstream source is not b
 
 `npm test` covers seeded ink, saved-setting compatibility, control limits, preset resets, and output dimensions. `npm run build` type-checks and builds the browser worker.
 
-`tests/test_print_pipeline.py` checks every effect, visible maximum wear, dark texture versus fading, exact upstream preset output, deterministic seeds, clean selections, transformed selection overlays, offset directions, and empty input. It needs Python with NumPy and SciPy and the pinned upstream `degrade.py` saved as `ocrodeg.py` in a separate directory:
+`tests/test_print_pipeline.py` checks every effect, visible maximum wear, dark texture versus fading, exact upstream preset output, deterministic seeds, clean selections, transformed selection overlays, offset directions, empty input, transparent backgrounds, soft alpha edges, and compositing over white. It needs Python with NumPy and SciPy and the pinned upstream `degrade.py` saved as `ocrodeg.py` in a separate directory:
 
 ```sh
 OCRODEG_SOURCE_DIR=/path/to/pinned-ocrodeg python3 tests/test_print_pipeline.py
@@ -92,3 +114,11 @@ OCRODEG_SOURCE_DIR=/path/to/pinned-ocrodeg python3 tests/test_print_pipeline.py
 The upstream source remains external to this repository. Use the commit and integrity hash listed above. Browser checks cover WebAssembly execution, visible controls, selection editing, PNG export, and the Original comparison.
 
 The font menu and PNG font embedding share one font catalog. New bundled serif families come from [Fontsource](https://fontsource.org/), and the same local font files are used for the editor, proof, and export.
+
+## License
+
+Copyright © 2026 Dimitri Michel. See [LICENSE](LICENSE).
+
+This source is available for **personal, noncommercial use**. You may run and privately modify your own copy. Commercial use, redistribution, and offering it as a service require written permission. GitHub's platform rights still apply to viewing and forking this public repository. This is not an open-source license.
+
+Bundled fonts and third-party dependencies keep their own licenses. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The license does not claim ownership of text or artwork you create with the app.

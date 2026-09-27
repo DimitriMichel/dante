@@ -58,6 +58,46 @@ def page_geometry(images, scale, seed, s):
     return images
 
 
+def ink_texture(shape, scale, seed, amount):
+    # Density variation leaves most of the ink dark.
+    if not amount:
+        return np.zeros(shape, dtype=np.float32)
+    seed_stage(seed, 9)
+    noise = ocrodeg.make_multiscale_noise(shape, [max(1, scale), max(1, 3 * scale), max(1, 12 * scale)])
+    return np.clip((noise - .45) / .55, 0, 1) ** 2 * .5 * amount / 100
+
+
+def transparent_ink(coverage, clean, guard, scale, seed, settings, ink_color):
+    """Compose ink alone, with unassociated alpha and no paper-colored fringe."""
+    recipe = settings.get('recipe', 'custom')
+    if recipe in ('book', 'fiber'):
+        # The transparent variants use upstream ink primitives without paper noise.
+        seed_stage(seed, 7)
+        marked = ocrodeg.random_blotches(coverage, fgblobs=1.5e-4, bgblobs=5e-5)
+        edges = ndi.gaussian_filter(marked, 1)
+        seed_stage(seed, 10)
+        if recipe == 'book':
+            density = ocrodeg.make_multiscale_noise_uniform(coverage.shape, limits=(0, .5))
+        else:
+            density = ocrodeg.make_multiscale_noise(coverage.shape, [1, 5, 10, 50], limits=(0, .5))
+        alpha = edges * (1 - density)
+        color = np.zeros(3, dtype=np.float32)
+    else:
+        alpha = coverage * (1 - ink_texture(coverage.shape, scale, seed, settings.get('texture', 0)))
+        color = ink_color
+    alpha *= 1 - .85 * settings.get('fade', 0) / 100 * coverage
+    # Restore protected letters using premultiplied color, then unpremultiply.
+    printed_alpha = alpha * (1 - guard)
+    clean_alpha = clean * guard
+    alpha = np.clip(printed_alpha + clean_alpha, 0, 1)
+    premultiplied = printed_alpha[:, :, None] * color + clean_alpha[:, :, None] * ink_color
+    rgb = np.divide(premultiplied, alpha[:, :, None], out=np.zeros_like(premultiplied), where=alpha[:, :, None] > 0)
+    out = np.zeros((*coverage.shape, 4), dtype=np.uint8)
+    out[:, :, :3] = np.clip(np.rint(rgb), 0, 255).astype(np.uint8)
+    out[:, :, 3] = np.clip(np.rint(alpha * 255), 0, 255).astype(np.uint8)
+    return out
+
+
 def render_arrays(source, guard, selection, scale, seed, s, paper_rgb):
     h, w = source.shape
     clean, guard, selection = page_geometry([source, guard, selection], scale, seed, s)
@@ -85,6 +125,9 @@ def render_arrays(source, guard, selection, scale, seed, s, paper_rgb):
 
     paper_color = np.asarray(paper_rgb, dtype=np.float32)
     ink_color = np.array([36, 33, 29], dtype=np.float32)
+    if s.get('transparent', False):
+        out = transparent_ink(coverage, clean, guard, scale, seed, s, ink_color)
+        return out, (np.clip(selection, 0, 1) * 255).astype(np.uint8)
     recipe = s.get('recipe', 'custom')
     if recipe in ('book', 'fiber'):
         # Call the complete original preset, with its default blur and blotches.
@@ -110,12 +153,7 @@ def render_arrays(source, guard, selection, scale, seed, s, paper_rgb):
                 paper = ocrodeg.make_multiscale_noise((h, w), scales, weights=[1, .3, .5, .3], limits=(.7, 1))
                 paper -= ocrodeg.make_fibrous_image((h, w), nfibers=min(2000, max(1, round(300 * w * h / (720 * 900 * scale ** 2)))), l=max(1, round(500 * scale)), a=.01, limits=(0, .25), blur=.5 * scale)
             paper_tone += (np.clip(paper, 0, 1) - 1) * s['paperGrain'] / 100
-        # Texture changes local density only; most of the ink stays dark.
-        ink_tone = np.zeros((h, w), dtype=np.float32)
-        if s.get('texture', 0):
-            seed_stage(seed, 9)
-            noise = ocrodeg.make_multiscale_noise((h, w), [max(1, scale), max(1, 3 * scale), max(1, 12 * scale)])
-            ink_tone = np.clip((noise - .45) / .55, 0, 1) ** 2 * .5 * s['texture'] / 100
+        ink_tone = ink_texture((h, w), scale, seed, s.get('texture', 0))
         paper = paper_tone[:, :, None] * paper_color
         protected_paper = paper
         ink = ink_color + (paper_color - ink_color) * ink_tone[:, :, None]

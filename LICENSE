@@ -1,0 +1,51 @@
+Impression Personal Use License 1.0
+
+Copyright (c) 2026 Dimitri Michel. All rights reserved except as stated below.
+
+1. Personal, noncommercial permission
+
+You may download, install, run, and privately modify this software for your own
+personal, noncommercial purposes. You may keep backup copies. You must preserve
+this license and all copyright and attribution notices in copies you make.
+
+2. Restrictions
+
+Without prior written permission from the copyright holder, you may not:
+- Use the software for commercial purposes, including paid work, business
+  operations, client work, or revenue-generating products or services.
+- Sell, sublicense, distribute, or publicly host the software or modified versions.
+- Offer the software's functionality to others as a hosted service.
+
+The permissions in section 1 do not include these restricted activities.
+For other uses, contact Dimitri Michel through https://github.com/DimitriMichel.
+
+3. Public repository and other rights
+
+Nothing in this license limits rights granted by GitHub's terms for viewing and
+forking the repository through GitHub, or rights that applicable law does not
+permit the copyright holder to restrict. A public fork does not grant additional
+permission to use, redistribute, or commercialize the software.
+
+4. Third-party material and output
+
+This license applies only to original Impression code and material controlled by
+the copyright holder. Third-party software, fonts, and other material retain their
+own licenses and notices. See THIRD_PARTY_NOTICES.md.
+
+This license does not transfer ownership of your input or of text and artwork you
+create with the software. Rights in third-party content remain with its owners.
+The restriction on commercial use of the software still applies.
+
+5. Termination
+
+The permissions granted here terminate if you violate this license. After
+termination, stop using the software and delete copies in your possession or
+control, except copies you are legally required or otherwise entitled to retain.
+
+6. Disclaimer
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE, AND NON INFRINGEMENT. TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE
+COPYRIGHT HOLDER IS NOT LIABLE FOR CLAIMS, DAMAGES, OR OTHER LIABILITY ARISING
+FROM THE SOFTWARE OR ITS USE.

@@ -72,6 +72,36 @@ class PrintEffects(unittest.TestCase):
         moved,_,_=pipeline.page_geometry([self.source,self.zero,self.zero],1,55,dict(offsetX=5,offsetY=5))
         self.assertGreater((x*moved).sum()/moved.sum(),cx)
         self.assertGreater((y*moved).sum()/moved.sum(),cy)
+    def test_transparency_preserves_ink_without_a_paper_layer(self):
+        for recipe in ['custom', 'book', 'fiber']:
+            with self.subTest(recipe=recipe):
+                out, _ = self.render(transparent=True, recipe=recipe, texture=80, softness=20)
+                alpha = out[:, :, 3]
+                self.assertGreater(np.count_nonzero(alpha == 0), alpha.size * .6)
+                self.assertGreater(np.count_nonzero(alpha > 0), 100)
+                self.assertGreater(np.count_nonzero((alpha > 0) & (alpha < 255)), 100)
+                np.testing.assert_array_equal(out, self.render(transparent=True, recipe=recipe, texture=80, softness=20, paperGrain=100)[0])
+                np.testing.assert_array_equal(out, self.render(transparent=True, recipe=recipe, texture=80, softness=20)[0])
+    def test_transparent_custom_matches_plain_white_composite(self):
+        settings = dict(texture=80, fade=50, softness=20, roughness=30, wear=35, protect=True, rotation=3)
+        opaque, _ = self.render(**settings)
+        transparent, _ = self.render(transparent=True, **settings)
+        alpha = transparent[:, :, 3:4].astype(float) / 255
+        composite = transparent[:, :, :3] * alpha + 255 * (1 - alpha)
+        np.testing.assert_allclose(composite, opaque[:, :, :3], atol=2)
+        # No white RGB fringe: custom ink keeps its color even in soft edges.
+        self.assertLessEqual(transparent[:, :, :3][transparent[:, :, 3] > 0].max(), 36)
+    def test_transparent_clean_selection_and_effects(self):
+        base, _ = self.render(transparent=True, protect=True)
+        for recipe in ['custom', 'book', 'fiber']:
+            out, _ = self.render(transparent=True, protect=True, recipe=recipe, wear=100, fade=100, roughness=70)
+            np.testing.assert_array_equal(out[self.guard == 1], base[self.guard == 1])
+        unprotected, _ = self.render(transparent=True)
+        for key, value in dict(wear=100, fade=100, texture=100, roughness=80, speckles=100, rotation=7).items():
+            with self.subTest(control=key):
+                out, _ = self.render(transparent=True, **{key: value})
+                self.assertGreater(np.count_nonzero(out[:, :, 3] != unprotected[:, :, 3]), 100)
+
     def test_empty_document_does_not_fail(self):
         self.source[:]=0
         out,_=self.render(rounding=100,edgeNoise=100,wear=100,roughness=100)

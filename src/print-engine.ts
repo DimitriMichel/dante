@@ -39,12 +39,13 @@ export class PrintEngine {
     };
     const protectedPixels = cellMask(cell => cell.attrs.ink === 'clean' || /^0,/.test(cell.attrs.ink || ''));
     const selectedPixels = cellMask(cell => !!job.selection && cell.end > job.selection.index && cell.start < job.selection.index + job.selection.length);
-    const paperRgb = [1, 3, 5].map(start => parseInt(job.paper.slice(start, start + 2), 16));
+    const transparent = job.paper === 'none';
+    const paperRgb = transparent ? [255, 255, 255] : [1, 3, 5].map(start => parseInt(job.paper.slice(start, start + 2), 16));
     const id = ++this.sequence, worker = this.start();
     return new Promise((resolve, reject) => {
       const timer = window.setTimeout(() => { this.stop(); reject(new Error('Loading the print engine took too long. Please retry.')); }, 120000);
       this.pending = { id, resolve, reject, timer };
-      worker.postMessage({ id, width, height, scale, seed: job.seed, settings: printSettings(job), paperRgb, pixels: pixels.buffer, protectedPixels: protectedPixels.buffer, selectedPixels: selectedPixels.buffer }, [pixels.buffer, protectedPixels.buffer, selectedPixels.buffer]);
+      worker.postMessage({ id, width, height, scale, seed: job.seed, settings: { ...printSettings(job), transparent }, paperRgb, pixels: pixels.buffer, protectedPixels: protectedPixels.buffer, selectedPixels: selectedPixels.buffer }, [pixels.buffer, protectedPixels.buffer, selectedPixels.buffer]);
     });
   }
 }
