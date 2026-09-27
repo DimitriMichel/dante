@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { printDimensions, printSettings, printDefaults } from './print-settings';
+import { printDimensions, printSettings, printDefaults, recipeSettings, validPrintInput } from './print-settings';
 test('existing documents retain the original ink renderer', () => {
   assert.equal(printSettings().finish, 'ink');
   assert.deepEqual(printSettings({ texture: NaN, wear: Infinity }), printDefaults);
@@ -14,5 +14,23 @@ test('normal proofs render at 2x and long proofs stay within the memory ceiling'
     assert.ok(size.width * size.height <= 3_000_000);
     assert.ok(size.height <= 8192);
     assert.ok(size.width > 0 && size.height > 0);
+  }
+});
+
+test('new controls preserve old settings and validate signed ranges', () => {
+  const old = printSettings({ texture: 75, wear: 100, finish: 'print' });
+  assert.equal(old.recipe, 'custom'); assert.equal(old.texture, 75); assert.equal(old.wear, 100);
+  assert.equal(old.fade, 0); assert.equal(old.pageScale, 100);
+  assert.equal(printSettings({ rotation: -90, offsetX: 50, pageScale: NaN }).rotation, -10);
+  assert.equal(printSettings({ pageTurn: 12 as 90 }).pageTurn, 0);
+  assert.equal(validPrintInput({ finish: 'print', rotation: -8, pageTurn: 270 }), true);
+  for (const value of [{ wear: 101 }, { rotation: -11 }, { fade: NaN }, { pageTurn: 45 }, { recipe: 'unknown' }, { surprise: 4 }]) assert.equal(validPrintInput(value), false);
+});
+test('library looks start without added effects and reset only print settings', () => {
+  for (const recipe of ['book', 'fiber'] as const) {
+    const s = recipeSettings(recipe);
+    assert.equal(s.recipe, recipe); assert.equal(s.finish, 'print');
+    assert.equal(s.wear, 0); assert.equal(s.fade, 0); assert.equal(s.rotation, 0); assert.equal(s.pageScale, 100);
+    assert.equal('ops' in s, false); assert.equal('spread' in s, false);
   }
 });

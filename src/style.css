@@ -22,3 +22,16 @@
 .proof-sheet{position:relative}.proof-sheet.has-print #proof{visibility:hidden}#printed-proof{position:absolute;inset:0;width:100%;height:100%;border-radius:2px;box-shadow:0 8px 38px #0004,0 1px 2px #0008}
 #print-selection{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:none}
 @media(max-width:760px){.print-toolbar,.print-settings{padding-left:18px;padding-right:18px}.print-settings{gap:12px}.print-range{min-width:128px}#print-status{font-size:9px}}
+
+/* Compact effect inspector; the paper remains the primary working surface. */
+.print-settings{display:block;max-height:310px;overflow-y:auto;padding:0 24px 12px;scrollbar-width:thin;scrollbar-color:#414146 transparent;flex-shrink:0}
+.print-look{display:flex;align-items:center;gap:12px;padding-top:14px}.print-look label{font-size:14px;color:#c8c8ce}.print-look select,.paper-style-control select{font-size:13px;padding:7px 10px;background:#242527;border:1px solid var(--border)}.print-look button{margin-left:auto;font-size:12px}
+.recipe-note{font-size:12px;line-height:1.5;color:var(--muted);margin:9px 0 12px;max-width:64ch}
+.effect-group{border-top:1px solid var(--border)}.effect-group summary{cursor:pointer;padding:13px 0;font-size:14px;color:#d2d2d8;user-select:none}.effect-group summary::marker{color:#85858e}.effects-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 24px;padding:4px 0 20px}
+.effect-control{display:grid;grid-template-columns:1fr auto;gap:6px 8px;align-content:start;min-width:0}.effect-control label{font-size:13px;color:#c6c6ce}.effect-control output{font-size:12px;color:#d9cbb0;font-variant-numeric:tabular-nums}.effect-control input{grid-column:1/-1;min-width:0;width:100%;height:20px;margin:0;accent-color:#c5b18d;cursor:pointer}.effect-control p,.paper-style-control p{grid-column:1/-1;color:var(--muted);font-size:12px;line-height:1.45;margin:0}
+.paper-style-control{display:flex;align-items:flex-start;flex-direction:column;gap:8px}.paper-style-control label{font-size:13px;color:#c6c6ce}.paper-style-control select{max-width:100%}
+@media(max-width:760px){.print-settings{max-height:390px;padding-left:18px;padding-right:18px}.effects-grid{gap:18px}.print-look{flex-wrap:wrap}.print-look button{margin-left:0}.effect-control input{height:28px}.print-toolbar .finish-label{font-size:13px}.finish-label select{font-size:13px}.effect-group summary{padding:15px 0}}
+@media(max-width:390px){.effects-grid{grid-template-columns:1fr}}
+
+.effect-control input{appearance:none;background:transparent;border:0;border-radius:0}.effect-control input::-webkit-slider-runnable-track{height:3px;border-radius:3px;background:linear-gradient(to right,#b9a789 0 var(--range),#34343a var(--range) 100%)}.effect-control input::-webkit-slider-thumb{appearance:none;width:11px;height:11px;border-radius:50%;background:#e2d6be;margin-top:-4px;box-shadow:0 0 0 3px #111213}.effect-control input::-moz-range-track{height:3px;background:#34343a}.effect-control input::-moz-range-progress{height:3px;background:#b9a789}.effect-control input::-moz-range-thumb{width:11px;height:11px;border:0;background:#e2d6be;border-radius:50%}
+@media(min-width:761px){.compose-panel,.proof-panel{min-height:0}.editor-area{min-height:120px}.workspace{min-height:620px}}
