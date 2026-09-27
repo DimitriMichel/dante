@@ -35,7 +35,7 @@ let state = readSaved();
 let selection: { index: number; length: number } | null = null;
 let cursorRange = { index: 0, length: 0 };
 let selectionScope = false, original = false, zoom = 1, renderFrame = 0;
-let zoomMode: 'page' | 'width' | 'manual' = 'width';
+let zoomMode: 'page' | 'width' | 'manual' = 'page';
 let activeSidebar: 'write' | 'effects' = 'write';
 let fontRevision = 0;
 let localSpread = state.spread, localVariation = state.variation;
@@ -46,13 +46,11 @@ const printControlMarkup = (group: string) => Object.entries(printControls).filt
   <input id="${key}" aria-label="${spec.label}" aria-describedby="${key}-help" type="range" min="${spec.min}" max="${spec.max}" step="1"/>
   <p id="${key}-help">${spec.help}</p></div>`).join('');
 $('#app').innerHTML = `
-  <header class="app-header">
-    <a class="brand" href="./" aria-label="Impression home"><span class="monogram">i</span><span>impression<span class="brand-dot">.</span></span></a>
-    <span class="app-description">A little more human.</span>
-    <div class="header-actions"><span id="save-status" class="save-status" role="status">Saved on this device</span><button id="export" class="primary">${icon('arrow-down-to-line')}<span>Export PNG</span></button></div>
-  </header>
   <main class="workspace">
     <aside id="studio-sidebar" class="studio-sidebar" aria-label="Text and effect controls">
+      <header class="studio-header">
+        <a class="brand" href="./" aria-label="Impression home"><span class="monogram">i</span><span>impression<span class="brand-dot">.</span></span></a>
+      </header>
       <div class="sidebar-tabs" role="tablist" aria-label="Editor tools">
         <button id="write-tab" role="tab" aria-selected="true" aria-controls="write-panel">${icon('type')}Write</button>
         <button id="effects-tab" role="tab" aria-selected="false" aria-controls="effects-panel" tabindex="-1">${icon('sliders-horizontal')}Effects</button>
@@ -71,7 +69,6 @@ $('#app').innerHTML = `
         <div class="editor-meta"><span id="word-count"></span><div class="history"><button id="undo" class="icon-button" aria-label="Undo" title="Undo (⌘Z)">${icon('undo-2')}</button><button id="redo" class="icon-button" aria-label="Redo" title="Redo (⌘⇧Z)">${icon('redo-2')}</button></div></div>
       </section>
       <section id="effects-panel" class="effects-panel" role="tabpanel" aria-labelledby="effects-tab" hidden>
-      <div id="mobile-paper" class="paper-section"></div>
       <section class="ink-controls" aria-labelledby="ink-title">
         <div class="controls-heading"><h2 id="ink-title">Ink & character</h2><div class="scope-switch" aria-label="Ink scope"><button id="document-scope" class="active" aria-pressed="true">Document</button><button id="selection-scope" disabled aria-pressed="false">Selection</button></div></div>
         <div id="selection-caption" class="selection-caption" hidden><span id="selected-text"></span><button id="clear-selection" class="icon-button" title="Clear selection" aria-label="Clear selection">${icon('x')}</button></div>
@@ -91,15 +88,7 @@ $('#app').innerHTML = `
       </div>
 
       </section>
-    </aside>
-    <section class="proof-panel" aria-label="Live ink preview">
-      <div class="proof-toolbar">
-        <div class="proof-title"><button id="toggle-sidebar" class="icon-button" aria-label="Hide editor" title="Hide editor" aria-controls="studio-sidebar" aria-expanded="true">${icon('panel-left-close')}</button><h1>Preview</h1></div>
-        <div class="view-switch" aria-label="Preview mode"><button id="view-ink" class="active" aria-pressed="true">Printed</button><button id="view-original" aria-pressed="false">Original</button></div>
-      </div>
-      <div class="proof-stage" tabindex="0" aria-label="Paper preview. Use the zoom controls to inspect the print."><div class="paper-wrap"><div class="proof-sheet"><svg id="proof" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Live paper proof of your text"></svg><canvas id="printed-proof" role="img" aria-label="Printed proof of your text" hidden></canvas><canvas id="print-selection" aria-hidden="true"></canvas></div></div></div>
-      <footer class="proof-footer">
-        <div id="desktop-paper"></div>
+      <footer class="sidebar-footer">
         <div class="paper-picker" aria-label="Paper color"><span>Paper</span>
           <button data-paper="#f1ede4" class="swatch warm" aria-label="Warm paper" title="Warm paper" aria-pressed="true"><span aria-hidden="true"></span></button>
           <button data-paper="#fbfaf7" class="swatch white" aria-label="White paper" title="White paper" aria-pressed="false"><span aria-hidden="true"></span></button>
@@ -108,18 +97,22 @@ $('#app').innerHTML = `
           <button data-paper="#ffffff" class="swatch bright-white" aria-label="Bright white paper" title="Bright white paper" aria-pressed="false"><span aria-hidden="true"></span></button>
           <button data-paper="#e3e5e8" class="swatch cool-gray" aria-label="Cool gray paper" title="Cool gray paper" aria-pressed="false"><span aria-hidden="true"></span></button>
         </div>
-        <div class="zoom-controls" aria-label="Preview zoom"><button id="zoom-out" class="icon-button" aria-label="Zoom out">${icon('minus')}</button><button id="zoom-value" title="Reset to actual size" aria-label="Reset zoom to 100 percent">100%</button><button id="zoom-in" class="icon-button" aria-label="Zoom in">${icon('plus')}</button><span class="toolbar-divider"></span><button id="zoom-fit" class="text-button" aria-pressed="true">Fit page</button><button id="zoom-width" class="text-button" aria-pressed="false">Fit width</button><button id="zoom-actual" class="text-button" aria-pressed="false">100%</button></div>
+        <span id="save-status" class="save-status" role="status">Saved on this device</span>
       </footer>
+    </aside>
+    <section class="proof-panel" aria-label="Live ink preview">
+      <div class="proof-toolbar" aria-label="Preview tools">
+        <div class="proof-title"><button id="toggle-sidebar" class="icon-button" aria-label="Hide editor" title="Hide editor" aria-controls="studio-sidebar" aria-expanded="true">${icon('panel-left-close')}</button><h1 class="visually-hidden">Preview</h1></div>
+        <div class="view-switch" aria-label="Preview mode"><button id="view-ink" class="active" aria-pressed="true">Printed</button><button id="view-original" aria-pressed="false">Original</button></div>
+        <div class="zoom-controls" aria-label="Preview zoom"><button id="zoom-out" class="icon-button" aria-label="Zoom out">${icon('minus')}</button><button id="zoom-value" title="Reset to actual size" aria-label="Reset zoom to 100 percent">100%</button><button id="zoom-in" class="icon-button" aria-label="Zoom in">${icon('plus')}</button><span class="toolbar-divider"></span><button id="zoom-fit" class="text-button" aria-pressed="true">Fit page</button><button id="zoom-width" class="text-button" aria-pressed="false">Fit width</button><button id="zoom-actual" class="text-button" aria-pressed="false">100%</button></div>
+        <button id="export" class="primary" aria-label="Export PNG" title="Export PNG">${icon('arrow-down-to-line')}<span>Export PNG</span></button>
+      </div>
+      <div class="proof-stage" tabindex="0" aria-label="Paper preview. Use the zoom controls to inspect the print."><div class="paper-wrap"><div class="proof-sheet"><svg id="proof" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Live paper proof of your text"></svg><canvas id="printed-proof" role="img" aria-label="Printed proof of your text" hidden></canvas><canvas id="print-selection" aria-hidden="true"></canvas></div></div></div>
       <div class="proof-status"><span id="print-status" role="status">Preparing print…</span><button id="print-retry" class="text-button" hidden>Retry</button></div>
     </section>
   </main><div id="toast" role="status" class="toast"></div>`;
 const icons = { ArrowDownToLine, ChevronDown, Shuffle, Undo2, Redo2, AlignLeft, AlignCenter, AlignRight, Plus, Minus, Check, RotateCcw, SlidersHorizontal, ArrowUpRight, X, PanelLeftClose, PanelLeftOpen, Type };
 createIcons({ icons });
-const mobileLayout = matchMedia('(max-width: 740px)');
-const paperPicker = $('.paper-picker');
-function placePaperPicker() { $(mobileLayout.matches ? '#mobile-paper' : '#desktop-paper').append(paperPicker); }
-mobileLayout.addEventListener('change', placePaperPicker);
-placePaperPicker();
 class InkAttribute extends Attributor {
   canAdd(node: HTMLElement, value: string) { return /^(clean|\d{1,3},\d{1,3})$/.test(value) && super.canAdd(node, value); }
 }
