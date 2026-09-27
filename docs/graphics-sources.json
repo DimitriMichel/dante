@@ -172,5 +172,143 @@
     "modifiedLocally": false,
     "sha256": "a57a2148407572cff64b909689017cac0d4dde1394c23c77bcac90c3ace3d127",
     "bundledFile": "public/engravings/pigeon.jpg"
+  },
+  {
+    "name": "green-turtle.jpg",
+    "dimensions": [
+      1993,
+      1228
+    ],
+    "upstreamOriginalDimensions": [
+      1993,
+      1228
+    ],
+    "downloadVersion": "original",
+    "filePage": "https://commons.wikimedia.org/wiki/File:SFR_b%2Bw_-_green_turtle.jpg",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/7/76/SFR_b%2Bw_-_green_turtle.jpg",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/7/76/SFR_b%2Bw_-_green_turtle.jpg",
+    "artist": "W.S.C.",
+    "book": "Johann David Wyss, The Swiss Family Robinson, George Routledge and Sons, Limited, 1891, p. 125.",
+    "date": "published 1891",
+    "license": "Public domain in the United States (PD-US)",
+    "rightsStatement": "This media file is in the public domain in the United States. The source cautions that public-domain status outside the United States may differ.",
+    "modifiedLocally": false,
+    "sha256": "916f43a989642e624e1430741e03f0bd0fe6b7d46aa03e474d8f89d8a21119ff",
+    "bundledFile": "public/engravings/green-turtle.jpg"
+  },
+  {
+    "name": "herring.jpg",
+    "dimensions": [
+      1942,
+      1552
+    ],
+    "upstreamOriginalDimensions": [
+      1942,
+      1552
+    ],
+    "downloadVersion": "original",
+    "filePage": "https://commons.wikimedia.org/wiki/File:SFR_b%2Bw_-_herring.jpg",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/b/b9/SFR_b%2Bw_-_herring.jpg",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/b/b9/SFR_b%2Bw_-_herring.jpg",
+    "artist": "T. W. Wood and another",
+    "book": "Johann David Wyss, The Swiss Family Robinson, George Routledge and Sons, Limited, 1891, p. 225.",
+    "date": "published 1891",
+    "license": "Public domain in the United States (PD-US)",
+    "rightsStatement": "This media file is in the public domain in the United States. The source cautions that public-domain status outside the United States may differ.",
+    "modifiedLocally": false,
+    "sha256": "2ec1a7c413c1ef67a455e0f5520a805ebe7ba1af7b114fdee519aac0db21ac49",
+    "bundledFile": "public/engravings/herring.jpg"
+  },
+  {
+    "name": "secretary-bird.jpg",
+    "dimensions": [
+      960,
+      1051
+    ],
+    "upstreamOriginalDimensions": [
+      946,
+      1036
+    ],
+    "downloadVersion": "archive-generated image size variant",
+    "filePage": "https://commons.wikimedia.org/wiki/File:SFR_b%2Bw_-_secretary_bird.jpg",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/e/e2/SFR_b%2Bw_-_secretary_bird.jpg",
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e2/SFR_b%2Bw_-_secretary_bird.jpg/960px-SFR_b%2Bw_-_secretary_bird.jpg",
+    "artist": "Unknown artist",
+    "book": "Johann David Wyss, The Swiss Family Robinson, George Routledge and Sons, Limited, 1891, p. 309.",
+    "date": "published 1891",
+    "license": "Public domain in the United States (PD-US)",
+    "rightsStatement": "This media file is in the public domain in the United States. The source cautions that public-domain status outside the United States may differ.",
+    "modifiedLocally": false,
+    "sha256": "f9c7c3e8a989a1db019f17eccb327bd67c661952371dec50959b2fb65c9651cb",
+    "bundledFile": "public/engravings/secretary-bird.jpg"
+  },
+  {
+    "name": "lions.jpg",
+    "dimensions": [
+      960,
+      877
+    ],
+    "upstreamOriginalDimensions": [
+      1060,
+      968
+    ],
+    "downloadVersion": "archive-generated image size variant",
+    "filePage": "https://commons.wikimedia.org/wiki/File:SFR_b%2Bw_-_lions.jpg",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/2/28/SFR_b%2Bw_-_lions.jpg",
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/28/SFR_b%2Bw_-_lions.jpg/960px-SFR_b%2Bw_-_lions.jpg",
+    "artist": "Unknown artist",
+    "book": "Johann David Wyss, The Swiss Family Robinson, George Routledge and Sons, Limited, 1891, p. 444.",
+    "date": "published 1891",
+    "license": "Public domain in the United States (PD-US)",
+    "rightsStatement": "This media file is in the public domain in the United States. The source cautions that public-domain status outside the United States may differ.",
+    "modifiedLocally": false,
+    "sha256": "706df3344c6419725b678e7da00547faace1a56cf84b013d8bc8c577637165a2",
+    "bundledFile": "public/engravings/lions.jpg"
+  },
+  {
+    "name": "walrus.jpg",
+    "dimensions": [
+      960,
+      859
+    ],
+    "upstreamOriginalDimensions": [
+      735,
+      658
+    ],
+    "downloadVersion": "archive-generated image size variant",
+    "filePage": "https://commons.wikimedia.org/wiki/File:SFR_b%2Bw_-_walrus.jpg",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3b/SFR_b%2Bw_-_walrus.jpg",
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3b/SFR_b%2Bw_-_walrus.jpg/960px-SFR_b%2Bw_-_walrus.jpg",
+    "artist": "Unknown artist",
+    "book": "Johann David Wyss, The Swiss Family Robinson, George Routledge and Sons, Limited, 1891, p. 389.",
+    "date": "published 1891",
+    "license": "Public domain in the United States (PD-US)",
+    "rightsStatement": "This media file is in the public domain in the United States. The source cautions that public-domain status outside the United States may differ.",
+    "modifiedLocally": false,
+    "sha256": "913ad28c6a22a1ce58592279322c1719f9c630d566513723fda8a6e85d0c5107",
+    "bundledFile": "public/engravings/walrus.jpg"
+  },
+  {
+    "name": "wild-boar.jpg",
+    "dimensions": [
+      732,
+      643
+    ],
+    "upstreamOriginalDimensions": [
+      732,
+      643
+    ],
+    "downloadVersion": "original",
+    "filePage": "https://commons.wikimedia.org/wiki/File:SFR_b%2Bw_-_wild_boar.jpg",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/8/8a/SFR_b%2Bw_-_wild_boar.jpg",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/8/8a/SFR_b%2Bw_-_wild_boar.jpg",
+    "artist": "Unknown artist",
+    "book": "Johann David Wyss, The Swiss Family Robinson, George Routledge and Sons, Limited, 1891, p. 440.",
+    "date": "published 1891",
+    "license": "Public domain in the United States (PD-US)",
+    "rightsStatement": "This media file is in the public domain in the United States. The source cautions that public-domain status outside the United States may differ.",
+    "modifiedLocally": false,
+    "sha256": "c0d98b9f7982b54a00c547806f0386cb2e8c5c53e5c7bd175b4c1ab857c129df",
+    "bundledFile": "public/engravings/wild-boar.jpg"
   }
 ]
