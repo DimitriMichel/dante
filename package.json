@@ -7,7 +7,7 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "node --import tsx --test src/ink.test.ts"
+    "test": "node --import tsx --test src/*.test.ts"
   },
   "dependencies": {
     "quill": "2.0.3",

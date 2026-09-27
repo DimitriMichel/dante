@@ -16,6 +16,8 @@ import '@fontsource/playfair-display/latin-700-italic.css';
 import 'quill/dist/quill.core.css';
 import './style.css';
 import { InkRenderer, type Op } from './render';
+import { PrintEngine, type PrintJob } from './print-engine';
+import { printDefaults, printSettings, type PrintSettings } from './print-settings';
 
 const fontOptions = {
   garamond: { label: 'EB Garamond', family: '"EB Garamond", Georgia, serif' },
@@ -24,7 +26,7 @@ const fontOptions = {
   georgia: { label: 'Georgia', family: 'Georgia, serif' },
 };
 type FontKey = keyof typeof fontOptions;
-type State = { font: FontKey; size: number; leading: number; spread: number; variation: number; seed: number; paper: string; ops: Op[] };
+type State = PrintSettings & { font: FontKey; size: number; leading: number; spread: number; variation: number; seed: number; paper: string; ops: Op[] };
 const defaultOps: Op[] = [
   { insert: 'A little more\nhuman.', attributes: {} },
 ];
@@ -36,13 +38,13 @@ defaultOps.splice(0, defaultOps.length,
   { insert: ' Let some letters hold their shape. Give others a little room to become something of their own.\n\n' },
   { insert: 'Not every mark needs to be the same.\n' },
 );
-const defaults: State = { font: 'garamond', size: 28, leading: 1.5, spread: 43, variation: 94, seed: 55, paper: '#f1ede4', ops: defaultOps };
+const defaults: State = { ...printDefaults, font: 'garamond', size: 28, leading: 1.5, spread: 43, variation: 94, seed: 55, paper: '#f1ede4', ops: defaultOps };
 const storageKey = 'impression.document.v1';
 function readSaved(): State {
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
     if (!saved || !Array.isArray(saved.ops)) return structuredClone(defaults);
-    return { ...defaults, ...saved, font: saved.font in fontOptions ? saved.font : 'garamond',
+    return { ...defaults, ...saved, ...printSettings(saved), font: saved.font in fontOptions ? saved.font : 'garamond',
       size: Number.isFinite(saved.size) ? Math.min(48, Math.max(18, saved.size)) : 28,
       ops: saved.ops.filter((op: Op) => typeof op.insert === 'string') };
   } catch { return structuredClone(defaults); }
@@ -51,6 +53,7 @@ let state = readSaved();
 let selection: { index: number; length: number } | null = null;
 let cursorRange = { index: 0, length: 0 };
 let selectionScope = false, original = false, zoom = 1, renderFrame = 0;
+let fontRevision = 0;
 let localSpread = state.spread, localVariation = state.variation;
 const $ = <T extends HTMLElement = HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
 const icon = (name: string) => `<i data-lucide="${name}" aria-hidden="true"></i>`;
@@ -82,7 +85,17 @@ $('#app').innerHTML = `
     </section>
     <section class="proof-panel" aria-label="Live ink preview">
       <div class="panel-heading"><div><span class="step">02</span><h2>Impression</h2><span class="live"><span></span>Live</span></div><div class="view-switch" aria-label="Preview mode"><button id="view-ink" class="active" aria-pressed="true">Ink bleed</button><button id="view-original" aria-pressed="false">Original</button></div></div>
-      <div class="proof-stage"><div class="paper-wrap"><div class="paper-topline"><span id="proof-font"></span><span id="proof-caption">AN ORIGINAL IMPRESSION</span></div><svg id="proof" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Live paper proof of your text"></svg><div class="paper-bottomline"><span id="proof-details"></span><span>MADE TO BE IMPERFECT.</span></div></div></div>
+      <div class="print-toolbar">
+        <label class="finish-label" for="finish">Process <select id="finish" aria-label="Rendering process"><option value="ink">Ink bleed</option><option value="print">Printed · ocrodeg</option></select></label>
+        <span id="print-status" role="status">Instant ink preview</span><button id="print-retry" class="text-button" hidden>Retry</button>
+      </div>
+      <div id="print-settings" class="print-settings" hidden>
+        <label for="paper-style">Texture <select id="paper-style" aria-label="Print paper texture"><option value="fibrous">Fibrous paper</option><option value="multiscale">Fine grain</option></select></label>
+        <label class="print-range" for="texture">Ink texture <input id="texture" type="range" min="0" max="100" aria-label="Ink texture strength"/><output id="texture-value"></output></label>
+        <label class="print-range" for="paperGrain">Paper grain <input id="paperGrain" type="range" min="0" max="100" aria-label="Paper grain strength"/><output id="paperGrain-value"></output></label>
+        <label class="print-range" for="wear">Wear <input id="wear" type="range" min="0" max="100" aria-label="Print wear"/><output id="wear-value"></output></label>
+      </div>
+      <div class="proof-stage"><div class="paper-wrap"><div class="paper-topline"><span id="proof-font"></span><span id="proof-caption">AN ORIGINAL IMPRESSION</span></div><div class="proof-sheet"><svg id="proof" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Live paper proof of your text"></svg><canvas id="printed-proof" role="img" aria-label="ocrodeg printed proof" hidden></canvas><svg id="print-selection" aria-hidden="true"></svg></div><div class="paper-bottomline"><span id="proof-details"></span><span>MADE TO BE IMPERFECT.</span></div></div></div>
       <footer class="proof-footer"><div class="paper-picker" aria-label="Paper color"><span>Paper</span><button data-paper="#f1ede4" class="swatch warm" aria-label="Warm paper" title="Warm paper" aria-pressed="true"></button><button data-paper="#fbfaf7" class="swatch white" aria-label="White paper" title="White paper" aria-pressed="false"></button><button data-paper="#e5dac3" class="swatch oat" aria-label="Oat paper" title="Oat paper" aria-pressed="false"></button></div><div class="layout-controls"><button id="align" class="icon-button" aria-label="Text alignment: left" title="Cycle text alignment">${icon('align-left')}</button><select id="leading" aria-label="Line spacing"><option value="1.3">1.3×</option><option value="1.5">1.5×</option><option value="1.7">1.7×</option></select><span class="toolbar-divider"></span><button id="zoom-out" class="icon-button" aria-label="Zoom out">${icon('minus')}</button><button id="zoom-fit" class="text-button" title="Fit paper to view">Fit</button><button id="zoom-in" class="icon-button" aria-label="Zoom in">${icon('plus')}</button></div></footer>
     </section>
   </main><div id="toast" role="status" class="toast"></div>`;
@@ -103,17 +116,84 @@ function save() {
   try { localStorage.setItem(storageKey, JSON.stringify(state)); $('#save-status').innerHTML = '<span class="status-dot"></span>Saved on this device'; }
   catch { $('#save-status').textContent = 'Device storage unavailable'; }
 }
+const printCanvas = $<HTMLCanvasElement>('#printed-proof');
+const printSheet = $('.proof-sheet');
+const printSelection = document.querySelector<SVGSVGElement>('#print-selection')!;
+let desiredPrint: PrintJob | null = null, printedKey = '', failedPrintKey = '';
+let printTask: Promise<void> | null = null, printTimer = 0;
+const engine = new PrintEngine(message => { if (state.finish === 'print' && !original) $('#print-status').textContent = message; });
+function showPrinted(show: boolean) {
+  printCanvas.hidden = !show; printSheet.classList.toggle('has-print', show);
+  printSelection.style.display = show ? 'block' : 'none';
+}
+function showPrintSelection() {
+  printSelection.setAttribute('viewBox', renderer.root.getAttribute('viewBox')!);
+  const highlight = renderer.root.querySelector('[data-selection]');
+  printSelection.replaceChildren(...(highlight ? [highlight.cloneNode(true)] : []));
+}
+function printReadyStatus() { $('#print-status').textContent = `Printed locally · ${printCanvas.width} × ${printCanvas.height}`; }
+async function ensurePrinted(): Promise<void> {
+  clearTimeout(printTimer);
+  if (printTask) return printTask;
+  printTask = (async () => {
+    while (desiredPrint && printedKey !== desiredPrint.key && state.finish === 'print' && !original) {
+      const job = desiredPrint;
+      if (failedPrintKey === job.key) break;
+      try {
+        const proof = await engine.render(job);
+        if (desiredPrint?.key !== job.key) continue;
+        printCanvas.width = proof.width; printCanvas.height = proof.height;
+        printCanvas.getContext('2d')!.putImageData(new ImageData(proof.pixels as Uint8ClampedArray<ArrayBuffer>, proof.width, proof.height), 0, 0);
+        printedKey = job.key;
+        if (state.finish === 'print' && !original) { showPrinted(true); showPrintSelection(); printReadyStatus(); }
+      } catch (error) {
+        failedPrintKey = job.key;
+        if (desiredPrint?.key !== job.key) continue;
+        showPrinted(false); $('#print-status').textContent = 'Print unavailable · ink preview shown';
+        $('#print-status').title = error instanceof Error ? error.message : String(error);
+        $('#print-retry').hidden = false;
+        break;
+      }
+    }
+  })().finally(() => { printTask = null; });
+  return printTask;
+}
+function queuePrinted(ops: Op[]) {
+  showPrintSelection();
+  if (state.finish !== 'print' || original) { showPrinted(false); $('#print-retry').hidden = true; $('#print-status').textContent = original ? 'Original type' : 'Instant ink preview'; return; }
+  const key = JSON.stringify([ops, state.font, state.size, state.leading, state.spread, state.variation, state.seed, state.paper, state.texture, state.paperGrain, state.wear, state.paperStyle, fontRevision]);
+  if (printedKey === key) { showPrinted(true); printReadyStatus(); return; }
+  showPrinted(false);
+  if (desiredPrint?.key === key) {
+    if (failedPrintKey === key) { $('#print-status').textContent = 'Print unavailable · ink preview shown'; $('#print-retry').hidden = false; }
+    else if (!printTask) { clearTimeout(printTimer); printTimer = window.setTimeout(() => void ensurePrinted(), 220); }
+    return;
+  }
+  desiredPrint = { ...state, key, root: renderer.root.cloneNode(true) as SVGSVGElement, width: renderer.width, height: renderer.height, cells: renderer.cells.map(cell => ({ ...cell, attrs: { ...cell.attrs } })), label: fontOptions[state.font].label };
+  failedPrintKey = ''; $('#print-retry').hidden = true; $('#print-status').title = '';
+  $('#print-status').textContent = 'Preparing print…';
+  clearTimeout(printTimer); printTimer = window.setTimeout(() => void ensurePrinted(), 220);
+}
+$('#print-retry').addEventListener('click', () => { failedPrintKey = ''; $('#print-retry').hidden = true; void ensurePrinted(); });
+window.addEventListener('pagehide', () => engine.stop(), { once: true });
 function schedule() {
   cancelAnimationFrame(renderFrame);
   renderFrame = requestAnimationFrame(() => {
-    renderer.render(quill.getContents().ops as Op[], { ...state, family: fontOptions[state.font].family, original });
+    const ops = quill.getContents().ops as Op[];
+    renderer.render(ops, { ...state, family: fontOptions[state.font].family, original });
     renderer.highlight(selectionScope ? selection : null);
+    queuePrinted(ops);
     $('#proof-font').textContent = fontOptions[state.font].label;
-    $('#proof-details').textContent = `${state.size} PX / ${original ? 'ORIGINAL TYPE' : 'INK ON PAPER'}`;
+    $('#proof-details').textContent = `${state.size} PX / ${original ? 'ORIGINAL TYPE' : state.finish === 'print' ? 'PRINTED WITH OCRODEG' : 'INK ON PAPER'}`;
     $('#proof-caption').textContent = original ? 'THE ORIGINAL TYPE' : 'AN ORIGINAL IMPRESSION';
   });
 }
 function sync() {
+  $<HTMLSelectElement>('#finish').value = state.finish;
+  $('#print-settings').hidden = state.finish !== 'print';
+  $<HTMLSelectElement>('#paper-style').value = state.paperStyle;
+  for (const name of ['texture', 'paperGrain', 'wear'] as const) { $<HTMLInputElement>(`#${name}`).value = String(state[name]); $(`#${name}-value`).textContent = String(state[name]); }
+  $('#view-ink').textContent = state.finish === 'print' ? 'Printed' : 'Ink bleed';
   $('#editor').style.setProperty('--editor-font', fontOptions[state.font].family);
   $('#editor').style.setProperty('--editor-size', `${Math.max(21, state.size * .86)}px`);
   $('#editor').style.setProperty('--editor-leading', String(state.leading));
@@ -153,7 +233,11 @@ quill.on('text-change', () => {
   if (selection && selection.index + selection.length > quill.getLength()) { selection = null; selectionScope = false; }
   save(); sync();
 });
-$('#font').addEventListener('change', () => { state.font = $<HTMLSelectElement>('#font').value as FontKey; sync(); save(); void document.fonts.ready.then(schedule); });
+function setPrintSettings(value: Partial<PrintSettings>) { Object.assign(state, printSettings({ ...state, ...value })); sync(); save(); }
+$('#finish').addEventListener('change', () => setPrintSettings({ finish: $<HTMLSelectElement>('#finish').value as PrintSettings['finish'] }));
+$('#paper-style').addEventListener('change', () => setPrintSettings({ paperStyle: $<HTMLSelectElement>('#paper-style').value as PrintSettings['paperStyle'] }));
+for (const name of ['texture', 'paperGrain', 'wear'] as const) $(`#${name}`).addEventListener('input', () => setPrintSettings({ [name]: Number($<HTMLInputElement>(`#${name}`).value) }));
+$('#font').addEventListener('change', () => { state.font = $<HTMLSelectElement>('#font').value as FontKey; sync(); save(); void document.fonts.ready.then(() => { fontRevision++; schedule(); }); });
 $('#font-size').addEventListener('change', () => { state.size = Math.min(48, Math.max(18, Number($<HTMLInputElement>('#font-size').value) || 28)); sync(); save(); });
 $('#leading').addEventListener('change', () => { state.leading = Number($<HTMLSelectElement>('#leading').value); sync(); save(); });
 function format(name: string, value: unknown) {
@@ -195,22 +279,31 @@ function changeZoom(value: number) { zoom = Math.min(1.7, Math.max(.65, value));
 $('#zoom-in').addEventListener('click', () => changeZoom(zoom + .15)); $('#zoom-out').addEventListener('click', () => changeZoom(zoom - .15)); $('#zoom-fit').addEventListener('click', () => changeZoom(1));
 $('#export').addEventListener('click', async () => {
   const button = $<HTMLButtonElement>('#export'); button.disabled = true; button.querySelector('span')!.textContent = 'Exporting…';
-  try { const { exportPng } = await import('./export'); await exportPng(renderer.root, renderer.width, renderer.height, state.font, fontOptions[state.font].label); toast('Your impression is ready.'); }
+  try {
+    const { exportPng, downloadCanvas } = await import('./export');
+    if (state.finish === 'print' && !original) {
+      await new Promise(requestAnimationFrame); await ensurePrinted();
+      if (!desiredPrint || printedKey !== desiredPrint.key) throw new Error('The print proof is not ready.');
+      await downloadCanvas(printCanvas);
+    } else await exportPng(renderer.root, renderer.width, renderer.height, state.font, fontOptions[state.font].label);
+    toast('Your impression is ready.');
+  }
   catch (error) { console.error(error); toast('Could not export. Please try again.'); }
   finally { button.disabled = false; button.querySelector('span')!.textContent = 'Export PNG'; }
 });
 window.addEventListener('keydown', event => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') { event.preventDefault(); save(); toast('Saved on this device.'); } if (event.key === 'Escape') { selection = null; selectionScope = false; sync(); } });
 sync();
-void document.fonts.ready.then(schedule);
+void document.fonts.ready.then(() => { fontRevision++; schedule(); });
 // Keep render fonts loaded before proofing, including italic and bold runs.
-async function loadFonts() { await Promise.all(Object.values(fontOptions).flatMap(font => [document.fonts.load(`28px ${font.family}`), document.fonts.load(`italic 28px ${font.family}`), document.fonts.load(`700 28px ${font.family}`)])); schedule(); }
+async function loadFonts() { await Promise.all(Object.values(fontOptions).flatMap(font => [document.fonts.load(`28px ${font.family}`), document.fonts.load(`italic 28px ${font.family}`), document.fonts.load(`700 28px ${font.family}`)])); fontRevision++; schedule(); }
 void loadFonts();
 // Feature-detected WebMCP uses the same document and controls as the visible app.
 const modelContext = (document as Document & { modelContext?: { registerTool: (tool: unknown, options: unknown) => Promise<void> | void } }).modelContext;
 if (modelContext?.registerTool) {
   const lifecycle = new AbortController();
   const register = (tool: unknown) => { try { void Promise.resolve(modelContext.registerTool(tool, { signal: lifecycle.signal })).catch(console.warn); } catch (error) { console.warn(error); } };
-  register({ name: 'read_impression', description: 'Read the current text and document ink settings.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: true, untrustedContentHint: true }, execute: () => ({ text: quill.getText(), font: state.font, spread: state.spread, unevenness: state.variation }) });
+  register({ name: 'read_impression', description: 'Read the current text and document ink settings.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: true, untrustedContentHint: true }, execute: () => ({ text: quill.getText(), font: state.font, spread: state.spread, unevenness: state.variation, finish: state.finish, texture: state.texture, paperGrain: state.paperGrain, wear: state.wear, paperStyle: state.paperStyle, printStatus: $('#print-status').textContent }) });
   register({ name: 'set_document_ink', description: 'Set document ink spread and unevenness while preserving selection overrides.', inputSchema: { type: 'object', properties: { spread: { type: 'integer', minimum: 0, maximum: 100 }, unevenness: { type: 'integer', minimum: 0, maximum: 100 } }, required: ['spread', 'unevenness'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, execute: async (input: unknown) => { const value = input as { spread: number; unevenness: number }; if (!value || ![value.spread, value.unevenness].every(x => Number.isInteger(x) && x >= 0 && x <= 100)) throw new Error('Ink values must be integers between 0 and 100.'); state.spread = value.spread; state.variation = value.unevenness; sync(); save(); await new Promise(requestAnimationFrame); return { spread: state.spread, unevenness: state.variation }; } });
+  register({ name: 'set_print_finish', description: 'Configure the rendering process and print texture. Printed mode starts a local background render; read_impression reports its status.', inputSchema: { type: 'object', properties: { finish: { type: 'string', enum: ['ink', 'print'] }, texture: { type: 'integer', minimum: 0, maximum: 100 }, paperGrain: { type: 'integer', minimum: 0, maximum: 100 }, wear: { type: 'integer', minimum: 0, maximum: 100 }, paperStyle: { type: 'string', enum: ['fibrous', 'multiscale'] } }, required: ['finish'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, execute: (input: unknown) => { const value = input as Partial<PrintSettings>; if (!value || !['ink', 'print'].includes(value.finish || '') || [value.texture, value.paperGrain, value.wear].some(x => x !== undefined && (!Number.isInteger(x) || x < 0 || x > 100)) || value.paperStyle !== undefined && !['fibrous', 'multiscale'].includes(value.paperStyle)) throw new Error('Choose a valid print process, texture, and percentages from 0 to 100.'); setPrintSettings(value); return printSettings(state); } });
   window.addEventListener('pagehide', () => lifecycle.abort(), { once: true });
 }
