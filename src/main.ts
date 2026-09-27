@@ -69,7 +69,6 @@ $('#app').innerHTML = `
 
         <div class="editor-area"><div id="editor"></div></div>
         <div class="editor-meta"><span id="word-count"></span><div class="history"><button id="undo" class="icon-button" aria-label="Undo" title="Undo (⌘Z)">${icon('undo-2')}</button><button id="redo" class="icon-button" aria-label="Redo" title="Redo (⌘⇧Z)">${icon('redo-2')}</button></div></div>
-        <div class="editor-guidance"><p>Select words to give them their own ink treatment.</p><button id="edit-effects" class="subtle">${icon('sliders-horizontal')}<span>Edit ink & paper</span></button></div>
       </section>
       <section id="effects-panel" class="effects-panel" role="tabpanel" aria-labelledby="effects-tab" hidden>
       <div id="mobile-paper" class="paper-section"></div>
@@ -234,7 +233,6 @@ function sync() {
   document.querySelectorAll<HTMLButtonElement>('[data-paper]').forEach(button => { button.setAttribute('aria-pressed', String(button.dataset.paper === state.paper)); });
   const words = quill.getText().trim().split(/\s+/).filter(Boolean).length;
   $('#word-count').textContent = `${words} ${words === 1 ? 'word' : 'words'}`;
-  $('#edit-effects span').textContent = hasSelection ? 'Style selected text' : 'Edit ink & paper';
   $('#effects-tab').classList.toggle('has-selection', hasSelection);
   $('#seed-label').textContent = `No. ${String(state.seed % 10000).padStart(4, '0')}`;
   const formats = selection ? quill.getFormat(selection.index, selection.length) : quill.getFormat(cursorRange.index, cursorRange.length);
@@ -321,7 +319,6 @@ for (const name of ['write', 'effects'] as const) {
     showSidebarTab(next); $(`#${next}-tab`).focus();
   });
 }
-$('#edit-effects').addEventListener('click', () => { showSidebarTab('effects'); $('#effects-tab').focus(); });
 $('#toggle-sidebar').addEventListener('click', () => {
   const hidden = $('.workspace').classList.toggle('preview-only');
   $('.studio-sidebar').hidden = hidden;

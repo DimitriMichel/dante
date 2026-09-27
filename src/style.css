@@ -66,10 +66,7 @@ input::-webkit-inner-spin-button { appearance: none; }
 .ql-editor::selection, .ql-editor *::selection { background: #b7986155; color: white; }
 .editor-meta { display: flex; align-items: center; justify-content: space-between; padding: 4px 16px 4px 24px; font-size: .75rem; color: var(--muted); }
 .history { display: flex; }
-.editor-guidance { padding: 16px 24px 20px; border-top: 1px solid var(--border); }
-.editor-guidance p { font-size: .75rem; line-height: 1.5; color: var(--muted); margin: 0 0 12px; max-width: 32ch; }
 .subtle { background: var(--field); border-color: var(--border); }
-.editor-guidance .subtle { width: 100%; }
 .effects-panel { flex: 1; min-height: 0; overflow-y: auto; padding: 20px 24px 32px; }
 .ink-controls { padding-block: 0 22px; border-bottom: 1px solid var(--border); }
 .controls-heading { display: flex; flex-direction: column; align-items: stretch; gap: 16px; margin-block-end: 22px; }
@@ -168,7 +165,6 @@ body:has(#selection-actions:not([hidden])) .seed-label { display: none; }
   .text-layout { width: auto; flex: 1; }.text-layout label { display: none; }
   .text-layout select { margin-inline-start: auto; }
   .editor-area { padding: 20px 24px; min-height: 70px; }
-  .editor-guidance { display: none; }
   .editor-meta { min-height: 36px; }.editor-meta .icon-button { height: 32px; min-height: 32px; }
   .effects-panel { padding: 16px 24px 28px; }
   input[type=range] { height: 44px; }
