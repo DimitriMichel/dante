@@ -70,7 +70,7 @@ $('#app').innerHTML = `
       </section>
       <section id="effects-panel" class="effects-panel" role="tabpanel" aria-labelledby="effects-tab" hidden>
       <section class="ink-controls" aria-labelledby="ink-title">
-        <div class="controls-heading"><h2 id="ink-title">Ink & character</h2><div class="scope-switch" aria-label="Ink scope"><button id="document-scope" class="active" aria-pressed="true">Document</button><button id="selection-scope" disabled aria-pressed="false">Selection</button></div></div>
+        <div class="controls-heading"><h2 id="ink-title">Ink & character</h2><div class="scope-switch" aria-label="Ink scope"><button id="document-scope" class="active" aria-pressed="true">Document</button><span id="selection-control" class="selection-control" tabindex="0" role="group" aria-label="Selection" aria-describedby="selection-tooltip"><button id="selection-scope" disabled aria-pressed="false">Selection</button><span id="selection-tooltip" role="tooltip">highlight text in the edit window to enable selection</span></span></div></div>
         <div id="selection-caption" class="selection-caption" hidden><span id="selected-text"></span><button id="clear-selection" class="icon-button" title="Clear selection" aria-label="Clear selection">${icon('x')}</button></div>
         <div class="slider-row"><label for="spread">Ink spread</label><output id="spread-value" for="spread"></output><input id="spread" aria-label="Ink spread" type="range" min="0" max="100"/><div class="range-captions"><span>Fine</span><span>Saturated</span></div></div>
         <div class="slider-row"><label for="variation">Unevenness</label><output id="variation-value" for="variation"></output><input id="variation" aria-label="Unevenness" type="range" min="0" max="100"/><div class="range-captions"><span>Uniform</span><span>Wandering</span></div></div>
@@ -246,6 +246,9 @@ function sync() {
   }
   const hasSelection = !!selection?.length;
   $<HTMLButtonElement>('#selection-scope').disabled = !hasSelection;
+  $('#selection-control').tabIndex = hasSelection ? -1 : 0;
+  if (hasSelection) $('#selection-control').removeAttribute('aria-describedby');
+  else $('#selection-control').setAttribute('aria-describedby', 'selection-tooltip');
   $('#selection-caption').hidden = !selectionScope || !hasSelection; $('#selection-actions').hidden = !selectionScope;
   $('#selected-text').textContent = selection ? `“${quill.getText(selection.index, selection.length).replace(/\n/g, ' ').slice(0, 48)}”` : '';
   for (const [id, active] of [['document-scope', !selectionScope], ['selection-scope', selectionScope], ['view-ink', !original], ['view-original', original]] as const) { $(`#${id}`).classList.toggle('active', active); $(`#${id}`).setAttribute('aria-pressed', String(active)); }
@@ -306,6 +309,7 @@ function updateInk() {
 }
 $('#spread').addEventListener('input', updateInk); $('#variation').addEventListener('input', updateInk);
 $('#document-scope').addEventListener('click', () => { selectionScope = false; sync(); });
+for (const event of ['pointerenter', 'focus']) $('#selection-control').addEventListener(event, () => $('#selection-control').removeAttribute('data-tooltip-dismissed'));
 $('#selection-scope').addEventListener('click', () => { if (selection) { selectionScope = true; sync(); } });
 $('#clear-selection').addEventListener('click', () => { selection = null; selectionScope = false; sync(); });
 $('#keep-clean').addEventListener('click', () => { if (!selection) return; quill.formatText(selection.index, selection.length, 'ink', 'clean', 'user'); localSpread = 0; sync(); toast('Selected letters will stay clean.'); });
@@ -392,7 +396,7 @@ $('#export').addEventListener('click', async () => {
   catch (error) { console.error(error); toast('Could not export. Please try again.'); }
   finally { button.disabled = false; button.querySelector('span')!.textContent = 'Export PNG'; }
 });
-window.addEventListener('keydown', event => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') { event.preventDefault(); save(); toast('Saved on this device.'); } if (event.key === 'Escape') { selection = null; selectionScope = false; sync(); } });
+window.addEventListener('keydown', event => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') { event.preventDefault(); save(); toast('Saved on this device.'); } if (event.key === 'Escape') { $('#selection-control').setAttribute('data-tooltip-dismissed', ''); selection = null; selectionScope = false; sync(); } });
 sync();
 void document.fonts.ready.then(() => { fontRevision++; schedule(); });
 // Keep render fonts loaded before proofing, including italic and bold runs.

@@ -72,6 +72,10 @@ input::-webkit-inner-spin-button { appearance: none; }
 .controls-heading h2 { font-size: .875rem; font-weight: 550; margin: 0; color: var(--text); }
 .scope-switch, .view-switch { display: inline-flex; padding: 3px; gap: 2px; background: var(--frame); border: 1px solid var(--border); border-radius: 8px; }
 .scope-switch button { flex: 1; }
+.selection-control { position: relative; display: flex; flex: 1; min-width: 0; border-radius: 4px; }
+.selection-control:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+#selection-tooltip { display: none; position: absolute; z-index: 5; inset-block-start: calc(100% + 8px); inset-inline-end: 0; width: min(17rem, calc(100vw - 64px)); padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--field); box-shadow: 0 4px 16px oklch(0 0 0 / .25); color: var(--text); font-size: .8125rem; line-height: 1.5; text-align: start; pointer-events: none; }
+.selection-control:has(button:disabled):not([data-tooltip-dismissed]):is(:hover, :focus-visible) #selection-tooltip { display: block; }
 .scope-switch button, .view-switch button { min-height: 40px; padding: 5px 12px; border-radius: 4px; font-size: .8125rem; color: var(--muted); }
 .scope-switch button.active, .view-switch button.active { background: var(--hover); color: var(--text); box-shadow: 0 1px 2px oklch(0 0 0 / .2); }
 .slider-row, .effect-control { display: grid; grid-template-columns: 1fr auto; align-content: start; align-items: center; gap: 4px 12px; min-width: 0; }
