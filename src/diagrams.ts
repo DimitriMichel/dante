@@ -1,12 +1,15 @@
+import { modernDiagramKinds, modernDiagramCategories, modernDiagramPaths, modernDiagramLabels, type ModernCategory } from './modern-diagrams';
 /** Parameterized diagrams. Coordinates stay inside the 100-unit wrap circle. */
 export const diagramKinds = {
+  ...modernDiagramKinds,
   orbit: 'Orbits', sphere: 'Celestial sphere', solar: 'Planetary orbits', lens: 'Lens rays', field: 'Magnetic field', pendulum: 'Pendulum',
   helix: 'Double helix', interference: 'Wave interference', prism: 'Prism rays', eclipse: 'Solar eclipse', diffraction: 'Diffraction', resonance: 'Resonance modes',
   waves: 'Waves', rosette: 'Rosette', lissajous: 'Lissajous', spiral: 'Logarithmic spiral', sine: 'Sine waves', gaussian: 'Bell curves',
   cardioid: 'Cardioid', lemniscate: 'Figure eight', spirograph: 'Spirograph', parabola: 'Parabolas', hyperbola: 'Hyperbolas', rose: 'Polar rose',
 } as const;
 export type DiagramKind = keyof typeof diagramKinds;
-export const diagramCategories: Record<DiagramKind, 'science' | 'math'> = {
+export const diagramCategories: Record<DiagramKind, 'science' | 'math' | ModernCategory> = {
+  ...modernDiagramCategories,
   orbit:'science', sphere:'science', solar:'science', lens:'science', field:'science', pendulum:'science',
   helix:'science', interference:'science', prism:'science', eclipse:'science', diffraction:'science', resonance:'science',
   waves:'math', rosette:'math', lissajous:'math', spiral:'math', sine:'math', gaussian:'math',
@@ -101,6 +104,7 @@ export function diagramPaths(g: {kind:DiagramKind;lines:number}):string[] {
       ...[-1,1].flatMap(side=>Array.from({length:Math.max(1,Math.round(n/3))},(_,i)=>trace(t=>{const y=-29+58*t,a=9+i*3;return [50+side*a*Math.sqrt(1+(y/22)**2),50+y];}))),
     ];
     case 'rose':return [polar(t=>{const r=43*Math.cos(n*t);return [r*Math.cos(t),r*Math.sin(t)];})];
+    default: return modernDiagramPaths(g.kind, n);
   }
 }
 export function diagramLabels(kind:DiagramKind): {text:string;x:number;y:number}[] {
@@ -109,5 +113,5 @@ export function diagramLabels(kind:DiagramKind): {text:string;x:number;y:number}
   if(kind==='sine')return [{text:'x',x:87,y:60},{text:'y',x:60,y:23}];
   if(kind==='gaussian')return [{text:'μ',x:50,y:89},{text:'σ',x:70,y:86}];
   if(kind==='pendulum')return [{text:'θ',x:50,y:39}];
-  return [];
+  return modernDiagramLabels(kind);
 }

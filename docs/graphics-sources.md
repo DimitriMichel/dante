@@ -1,6 +1,6 @@
 # Graphics sources
 
-The Science and Math diagrams are original parameterized drawings. They are decorative scientific illustrations, not measurements or physical simulations. Their source is in `src/diagrams.ts`.
+The Science, Math, Technology, AI, and Money diagrams are original parameterized drawings. They are decorative scientific illustrations, not measurements or physical simulations. Their source is in `src/diagrams.ts` and `src/modern-diagrams.ts`. Financial charts use illustrative values; they do not represent market data.
 
 ## Animal engravings
 
@@ -100,3 +100,7 @@ The following archive images are bundled unchanged. Each linked archive identifi
 | Leaf flourish | [Archive record](https://commons.wikimedia.org/wiki/File:Ornament_1,_Clouds_without_Water_(Crowley,_1909).png) | Aleister Crowley (source attribution; ornament artist not separately identified) | 1909 |
 | Printer flowers | [Archive record](https://commons.wikimedia.org/wiki/File:Ornement_typographique,_quatre_bouquets_de_fleurs.jpg) | Joseph de La Nézière | 1911 |
 | Floral divider | [Archive record](https://commons.wikimedia.org/wiki/File:Endpiece_from_Three_Stories_(2)_rotated.jpg) | Unknown artist | 1886 |
+
+## Original modern illustrations
+
+The Technology, AI, and Money collections include sixteen original engraving-style illustrations generated with OpenAI’s built-in image generation tool. They are modern illustrations, not historical archive scans. The generated PNG files are bundled unchanged with their original alpha transparency. [generated-graphics.json](generated-graphics.json) records the prompt, file, dimensions, and SHA-256 for each selected result.

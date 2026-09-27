@@ -34,7 +34,7 @@ try {
     results.push({ name: `${engravingArt[kind].label}: embedded image, transparent scan paper, print mask`, detail: { ink, visible, dark, alphaMass, maskMass } });
   }
   graphic.kind = 'elephant';
-  const mixed: Graphic[] = [{...graphic, id: 'orbit', kind: 'orbit', x: 256, y: 177, size: 220}, {...graphic, id: 'waves', kind: 'waves', x: 90, y: 325, size: 220}, {...graphic, x: 350, y: 385}];
+  const mixed: Graphic[] = [{...graphic, id: 'orbit', kind: 'ai-neural-network', x: 256, y: 177, size: 220}, {...graphic, id: 'waves', kind: 'money-guilloche', x: 90, y: 325, size: 220}, {...graphic, x: 350, y: 385}, {...graphic, id: 'chip', kind: 'tech-microprocessor', x: 90, y: 720}];
   renderer.render([{ insert: 'A little more human.' }, { insert: '\n', attributes: { header: 1 } }, { insert: '\nThere is a certain beauty in the things that refuse to be perfect. A softened edge. An uneven impression. The small trace of a hand at work.\n\nLet the ink wander. Let some letters hold their shape. Give others a little room to become something of their own.\n\nNot every mark needs to be the same.\n' }], { ...options, original: false, spread: 43, variation: 94, graphics: mixed });
   const detached = renderer.root.cloneNode(true) as SVGSVGElement;
   const liveMask = await rasterizeProof(renderer.root, renderer.width, renderer.height, 'garamond', 'EB Garamond', 1, true);

@@ -82,9 +82,9 @@ export class GraphicControls {
     this.panel.querySelectorAll<HTMLButtonElement>('[data-add-graphic], #duplicate-graphic').forEach(button => button.disabled = items.length >= 8);
     const g = this.selected();
     const credit = this.panel.querySelector<HTMLElement>('#graphic-credit')!;
-    credit.hidden = !g || !isEngraving(g.kind);
+    credit.hidden = !g || !isEngraving(g.kind) || !engravingArt[g.kind].source;
     credit.replaceChildren();
-    if (g && isEngraving(g.kind)) {
+    if (g && isEngraving(g.kind) && engravingArt[g.kind].source) {
       const art = engravingArt[g.kind], link = document.createElement('a');
       link.href = art.source; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = `Archive engraving · ${art.year}`;
       credit.append(link);

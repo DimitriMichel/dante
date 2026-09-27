@@ -1,8 +1,9 @@
+import { generatedArt } from './generated-art';
 import { engravingArt, isEngraving, type EngravingKind, type EngravingCategory } from './engraving-art';
 import { diagramKinds, diagramCategories, diagramPaths, diagramLabels } from './diagrams';
-export const graphicKinds = { ...diagramKinds, ...Object.fromEntries(Object.entries(engravingArt).map(([key, value]) => [key, value.label])) as Record<EngravingKind, string> };
+export const graphicKinds = { ...Object.fromEntries(Object.entries(generatedArt).map(([key, value]) => [key, value.label])) as Record<keyof typeof generatedArt, string>, ...diagramKinds, ...Object.fromEntries(Object.entries(engravingArt).map(([key, value]) => [key, value.label])) as Record<EngravingKind, string> };
 export const graphicCategories = { ...diagramCategories, ...Object.fromEntries(Object.entries(engravingArt).map(([key, art]) => [key, art.category])) as Record<EngravingKind, EngravingCategory> };
-export const graphicCategoryLabels = { science: 'Science', math: 'Math', animals: 'Animals', botanical: 'Botanical', specimens: 'Insects & specimens', anatomy: 'Anatomy', instruments: 'Scientific instruments', celestial: 'Celestial', architecture: 'Architecture', machines: 'Machines & inventions', ornaments: 'Ornaments' } as const;
+export const graphicCategoryLabels = { science: 'Science', math: 'Math', technology: 'Technology', ai: 'AI', money: 'Money', animals: 'Animals', botanical: 'Botanical', specimens: 'Insects & specimens', anatomy: 'Anatomy', instruments: 'Scientific instruments', celestial: 'Celestial', architecture: 'Architecture', machines: 'Machines & inventions', ornaments: 'Ornaments' } as const;
 export type GraphicKind = keyof typeof graphicKinds;
 export type Graphic = { id: string; kind: GraphicKind; x: number; y: number; size: number; lines: number; weight: number; gap: number };
 export type GraphicBox = { x: number; y: number; width: number; height: number };

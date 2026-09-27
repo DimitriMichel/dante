@@ -1,6 +1,7 @@
+import { generatedArt } from './generated-art';
 import { animalArt, type AnimalKind } from './animal-art';
 
-export type EngravingCategory = 'animals' | 'botanical' | 'specimens' | 'anatomy' | 'instruments' | 'celestial' | 'architecture' | 'machines' | 'ornaments';
+export type EngravingCategory = 'animals' | 'botanical' | 'specimens' | 'anatomy' | 'instruments' | 'celestial' | 'architecture' | 'machines' | 'ornaments' | 'technology' | 'ai' | 'money';
 type Engraving = { label: string; file: string; width: number; height: number; year: string; source: string; category: EngravingCategory };
 
 /** Unmodified archive images. Source records and rights are in docs/graphics-sources.md. */
@@ -39,6 +40,6 @@ const additionalEngravings = {
   "ornament-divider": {"label": "Floral divider", "file": "/engravings/ornament-divider.jpg", "width": 960, "height": 214, "year": "1886", "source": "https://commons.wikimedia.org/wiki/File:Endpiece_from_Three_Stories_(2)_rotated.jpg", "category": "ornaments"},
 } as const satisfies Record<string, Engraving>;
 const animals = Object.fromEntries(Object.entries(animalArt).map(([kind, art]) => [kind, { ...art, category: 'animals' as const }])) as { [K in AnimalKind]: (typeof animalArt)[K] & { category: 'animals' } };
-export const engravingArt = { ...animals, ...additionalEngravings };
+export const engravingArt = { ...animals, ...additionalEngravings, ...generatedArt };
 export type EngravingKind = keyof typeof engravingArt;
 export function isEngraving(kind: string): kind is EngravingKind { return Object.hasOwn(engravingArt, kind); }
