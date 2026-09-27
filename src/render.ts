@@ -1,7 +1,9 @@
 import { inkWalk, inkSetting } from './ink';
+import { graphicSvg, type Graphic } from './graphics';
+import { wrapParagraph } from './flow';
 export type Attributes = { bold?: boolean; italic?: boolean; header?: number; align?: string; ink?: string };
 export type Op = { insert?: unknown; attributes?: Attributes };
-export type RenderOptions = { family: string; size: number; leading: number; spread: number; variation: number; seed: number; paper: string; original: boolean };
+export type RenderOptions = { family: string; size: number; leading: number; spread: number; variation: number; seed: number; paper: string; original: boolean; graphics?: Graphic[] };
 export type Cell = { text: string; start: number; end: number; attrs: Attributes; x: number; right: number; y: number; h: number };
 const ns = 'http://www.w3.org/2000/svg';
 export function svg<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, string | number> = {}): SVGElementTagNameMap[K] {
@@ -62,8 +64,8 @@ export class InkRenderer {
   private highlights = svg('g', { 'data-selection': 'true' });
   constructor(readonly root: SVGSVGElement) {}
   render(ops: Op[], options: RenderOptions) {
-    const width = this.width, padding = 72, usable = width - padding * 2;
-    const source = svg('g', { id: 'ink-source', fill: '#24211d', 'font-family': options.family, 'font-kerning': 'normal' });
+    const width = this.width, padding = 72;
+    const source = svg('g', { id: 'ink-source', fill: '#24211d', color: '#24211d', 'font-family': options.family, 'font-kerning': 'normal' });
     const defs = svg('defs'), layers = svg('g', { 'data-ink-layers': 'true' });
     const background = svg('rect', { width: '100%', height: '100%', fill: options.paper });
     this.root.replaceChildren(defs, background, source, layers, this.highlights);
@@ -76,23 +78,14 @@ export class InkRenderer {
       const size = options.size * (paragraph.attrs.header === 1 ? 1.9 : paragraph.attrs.header === 2 ? 1.4 : 1);
       const lineHeight = size * (paragraph.attrs.header ? 1.18 : options.leading);
       const items = paragraph.glyphs;
-      let first = 0; const lines: Glyph[][] = [];
-      while (first < items.length) {
-        let end = first, breakAfter = -1;
-        while (end < items.length) {
-          if (end > first && measured(items.slice(first, end + 1), size) > usable) break;
-          if (/\s/u.test(items[end].text)) breakAfter = end + 1;
-          end++;
-        }
-        if (end < items.length && breakAfter > first) end = breakAfter;
-        lines.push(items.slice(first, end)); first = end;
-      }
-      if (!lines.length) lines.push([]);
-      for (const line of lines) {
-        baseline += lineHeight;
+      const wrapped = wrapParagraph(items, line => measured(line, size), { baseline, lineHeight, size, left: padding, right: width - padding, graphics: options.graphics || [] });
+      baseline = wrapped.baseline;
+      for (const row of wrapped.lines) {
+        const line = row.items;
+        const rowWidth = row.right - row.left;
         const lineWidth = measured(line, size);
-        let x = padding + (paragraph.attrs.align === 'center' ? (usable - lineWidth) / 2 : paragraph.attrs.align === 'right' ? usable - lineWidth : 0);
-        const node = svg('text', { x, y: baseline, 'font-size': size, 'xml:space': 'preserve', 'white-space': 'pre' });
+        let x = row.left + (paragraph.attrs.align === 'center' ? (rowWidth - lineWidth) / 2 : paragraph.attrs.align === 'right' ? rowWidth - lineWidth : 0);
+        const node = svg('text', { x, y: row.baseline, 'font-size': size, 'xml:space': 'preserve', 'white-space': 'pre' });
         source.append(node);
         for (const run of runs(line)) {
           const span = svg('tspan', { 'font-weight': run.attrs.bold ? 700 : 400, 'font-style': run.attrs.italic ? 'italic' : 'normal' });
@@ -110,7 +103,7 @@ export class InkRenderer {
               left = x + this.context.measureText(prefix).width;
               right = x + this.context.measureText(prefix + glyph.text).width;
             }
-            this.cells.push({ ...glyph, x: left, right, y: baseline - size, h: lineHeight });
+            this.cells.push({ ...glyph, x: left, right, y: row.baseline - size, h: lineHeight });
             prefix += glyph.text; charIndex += count;
           });
           x += this.context.measureText(span.textContent).width;
@@ -118,8 +111,20 @@ export class InkRenderer {
       }
       if (paragraph.attrs.header) baseline += options.size * .35;
     }
-    this.height = Math.max(900, baseline + padding + options.size * .4);
+    const graphics = svg('g', { id: 'graphic-source', fill: 'none' });
+    for (const graphic of options.graphics || []) {
+      const drawing = graphicSvg({ ...graphic, weight: graphic.weight * 100 / graphic.size });
+      drawing.setAttribute('x', String(graphic.x)); drawing.setAttribute('y', String(graphic.y));
+      drawing.setAttribute('width', String(graphic.size)); drawing.setAttribute('height', String(graphic.size));
+      graphics.append(drawing);
+    }
+    source.append(graphics);
+    this.height = Math.max(900, baseline + padding + options.size * .4, ...(options.graphics || []).map(g => g.y + g.size + padding));
     const height = this.height;
+    if (!options.original && options.spread > 0 && graphics.children.length) {
+      defs.append(filterFor('graphics', options.spread / 100, options.variation / 100, width, height));
+      layers.append(svg('use', { href: '#graphic-source', filter: 'url(#ink-filter-graphics)' }));
+    }
     this.root.setAttribute('viewBox', `0 0 ${width} ${height}`);
     this.root.setAttribute('width', String(width)); this.root.setAttribute('height', String(height));
     const walk = inkWalk(this.cells, options.seed);

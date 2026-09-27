@@ -4,7 +4,7 @@
 
 Impression turns clean digital type into something that looks printed: ink that spreads, edges that soften, and small imperfections that give each letter character. Write on the left, see the printed result on the right, and adjust the effects without losing sight of your last finished print.
 
-Built for serif typography, with rich text editing, selective ink treatments, repeatable randomness, and PNG export. All text and image processing stays in your browser.
+Built for serif typography, with rich text editing, selective ink treatments, repeatable randomness, draggable geometric graphics, and PNG export. All text and image processing stays in your browser.
 
 ## Before and after
 
@@ -17,6 +17,7 @@ The same text, before and after its print treatment:
 ## What you can make
 
 - Soft ink spread or a heavily worn impression, with separate controls for texture, fading, and missing ink.
+- Sparse orbital, wave, and rosette graphics, with text that wraps around their outlines.
 - Different treatments for selected words, including letters kept completely clean.
 - Book-like and fibrous print textures, rough or rounded edges, and subtle page distortion.
 - Prints on five paper colors, or ink on a transparent background for use in other designs. The transparent option is the fourth swatch, marked with an X; its preview sits on white.
@@ -37,6 +38,7 @@ Open the local URL printed by Vite. `npm run build` creates the static app in `d
 
 - Write and format text in the **Write** tab. Choose EB Garamond, Libre Baskerville, Playfair Display, Bodoni Moda, Cormorant Garamond, Crimson Pro, Lora, or Georgia. The bundled families include regular, italic, bold, and bold italic.
 - Open **Effects** to adjust **Ink spread** and **Unevenness** for the document. The full-height sidebar scrolls independently. The paper sits on a dot-grid canvas to the right, with comparison, zoom, and export in a floating toolbar.
+- Open **Graphics** to add Orbits, Waves, or Rosette. Drag a graphic on the paper to place it. The print updates after release while the last completed print stays visible. Adjust Size, Detail, Line weight, and Text gap. Arrow keys move a focused graphic; Shift moves it farther. Duplicate or remove graphics from the same panel. A document can contain up to eight graphics.
 - Select letters or words in the editor to give them their own ink settings. **Keep clean** preserves their original outlines. **Reset ink** returns them to the document settings.
 - **New impression** changes ink placement while preserving custom selections. **Original** compares against the clean type.
 - Printed is the only rendering process. In **Effects**, choose a starting look: **Custom print**, **Book print**, or **Rough paper**. Book print and Rough paper run ocrodeg's complete original print presets; their built-in textures stay part of the starting look.
@@ -46,7 +48,7 @@ Open the local URL printed by Vite. `npm run build` creates the static app in `d
 - **Reset effects** returns the chosen starting look to its defaults, preserving text, formatting, spread, and selection overrides.
 - Choose Warm, White, Oat, No paper, Bright white, or Cool gray. No paper removes the paper layer and exports transparency; the preview uses white behind it. Paper settings are kept when you switch back to a paper color. Paper colors stay at the bottom of the control panel. Change spacing and alignment in Write. Export the current proof as a PNG at up to 2× resolution.
 - The preview opens at **Fit page** to show the entire sheet. **Fit width** enlarges it for inspecting ink; **100%** shows actual size. Use the plus/minus buttons for 15–300% zoom, or click the percentage to return to 100%. Use the toolbar’s Hide editor button for more room.
-- On narrow screens the preview stays above the Write/Effects panel. Tabs support arrow-key navigation, and selections survive switching panels.
+- On narrow screens the preview stays above the Write/Effects/Graphics panel. Tabs support arrow-key navigation, and selections survive switching panels.
 - The document saves in this browser on this device. There is no cloud document sync. Clearing browser storage removes the saved document.
 
 ## Rendering
@@ -54,6 +56,8 @@ Open the local URL printed by Vite. `npm run build` creates the static app in `d
 The renderer preserves shaped text runs, then overlays localized SVG ink diffusion. A seeded, mean-reverting random walk controls coverage across letters. At maximum unevenness, automatic bleed coverage varies continuously from 30% to 100%; lower unevenness brings letters closer to the same coverage. Only an explicit clean selection or zero spread removes bleed. Spread stays bounded by the slider value; random placement does not amplify the filter kernel. Texture seeds are fixed, while rerolling only changes placement.
 
 Selection overrides live inside Quill's Delta as an inline `ink` attribute, so Quill maintains their position through edits and undo/redo. The clean text remains underneath the ink; soft alpha masks avoid hard clipping of letter edges.
+
+Graphics are deterministic SVG curves inside the same source ink layer as the text. The layout subtracts their circular contours from each text row, allowing text on either side of a graphic placed inside a paragraph. Graphics receive document ink diffusion and every print effect; selection-specific overrides still apply only to text. Their positions and settings save with the document. Drag targets follow the geometric transformation of the print, including page turns and waves. Selection frames never appear in exports.
 
 The PNG export embeds the selected bundled font before rasterizing. Georgia uses the system's installed serif font. The initial proof is 720 × 900 units and grows vertically with the text. Ink editing and export run in the browser. Latin font subsets are bundled; other scripts use the browser's serif fallback. This first version uses left-to-right line layout.
 
@@ -103,9 +107,9 @@ Upstream credit: ocrodeg by Thomas Breuel / NVIDIA. The upstream source is not b
 
 ## Verification
 
-`npm test` covers seeded ink, saved-setting compatibility, control limits, preset resets, and output dimensions. `npm run build` type-checks and builds the browser worker.
+`npm test` covers seeded ink, saved-setting compatibility, control limits, preset resets, output dimensions, graphic persistence, word wrapping around overlapping graphics, and preservation of every text grapheme. `npm run build` type-checks and builds the browser worker.
 
-`tests/test_print_pipeline.py` checks every effect, visible maximum wear, dark texture versus fading, exact upstream preset output, deterministic seeds, clean selections, transformed selection overlays, offset directions, empty input, transparent backgrounds, soft alpha edges, and compositing over white. It needs Python with NumPy and SciPy and the pinned upstream `degrade.py` saved as `ocrodeg.py` in a separate directory:
+`tests/test_print_pipeline.py` checks every effect, visible maximum wear, dark texture versus fading, exact upstream preset output, deterministic seeds, clean selections, transformed selection overlays, offset directions, graphic drag targets after page transformations, empty input, transparent backgrounds, soft alpha edges, and compositing over white. It needs Python with NumPy and SciPy and the pinned upstream `degrade.py` saved as `ocrodeg.py` in a separate directory:
 
 ```sh
 OCRODEG_SOURCE_DIR=/path/to/pinned-ocrodeg python3 tests/test_print_pipeline.py

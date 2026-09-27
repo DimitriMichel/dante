@@ -19,6 +19,7 @@ export async function rasterizeProof(root: SVGSVGElement, width: number, height:
   if (mask) {
     clone.querySelector(':scope > rect')?.setAttribute('fill', 'white');
     clone.querySelector('#ink-source')?.setAttribute('fill', 'black');
+    clone.querySelector('#ink-source')?.setAttribute('color', 'black');
     clone.querySelectorAll('feFlood').forEach(el => el.setAttribute('flood-color', 'black'));
   }
   const blob = new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' });

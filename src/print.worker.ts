@@ -33,10 +33,10 @@ self.onmessage = async ({ data }) => {
     const render = py.globals.get('make_print');
     try { output = render(new Uint8Array(pixels), new Uint8Array(protectedPixels), new Uint8Array(selectedPixels), width, height, scale, seed, JSON.stringify(settings), paperRgb); }
     finally { render.destroy(); }
-    const [values, selection] = output.toJs();
+    const [values, selection, graphicLayout] = output.toJs();
     const buffer = new Uint8ClampedArray(values).buffer;
     const overlay = new Uint8Array(selection).buffer;
-    self.postMessage({ type: 'result', id, width, height, elapsed: performance.now() - started, pixels: buffer, selection: overlay }, { transfer: [buffer, overlay] });
+    self.postMessage({ type: 'result', id, width, height, elapsed: performance.now() - started, pixels: buffer, selection: overlay, graphics: JSON.parse(graphicLayout) }, { transfer: [buffer, overlay] });
   } catch (error) {
     self.postMessage({ type: 'error', id, message: error instanceof Error ? error.message : String(error) });
   } finally { output?.destroy(); }

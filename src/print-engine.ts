@@ -1,8 +1,9 @@
 import { rasterizeProof } from './export';
 import { printDimensions, printSettings, type PrintSettings } from './print-settings';
+import { graphicBox, type Graphic, type GraphicPlacement } from './graphics';
 import type { Cell } from './render';
-export type PrintJob = PrintSettings & { key: string; root: SVGSVGElement; width: number; height: number; cells: Cell[]; font: string; label: string; seed: number; paper: string; selection: { index: number; length: number } | null };
-export type PrintedProof = { width: number; height: number; pixels: Uint8ClampedArray; selection: Uint8Array; elapsed: number };
+export type PrintJob = PrintSettings & { key: string; graphics: Graphic[]; root: SVGSVGElement; width: number; height: number; cells: Cell[]; font: string; label: string; seed: number; paper: string; selection: { index: number; length: number } | null };
+export type PrintedProof = { width: number; height: number; pixels: Uint8ClampedArray; selection: Uint8Array; elapsed: number; graphics: GraphicPlacement[] };
 export class PrintEngine {
   private worker?: Worker;
   private sequence = 0;
@@ -17,7 +18,7 @@ export class PrintEngine {
       if (!pending || pending.id !== data.id) return;
       clearTimeout(pending.timer); this.pending = undefined;
       if (data.type === 'error') { this.stop(); pending.reject(new Error(data.message)); }
-      else pending.resolve({ width: data.width, height: data.height, pixels: new Uint8ClampedArray(data.pixels), selection: new Uint8Array(data.selection), elapsed: data.elapsed });
+      else pending.resolve({ width: data.width, height: data.height, pixels: new Uint8ClampedArray(data.pixels), selection: new Uint8Array(data.selection), elapsed: data.elapsed, graphics: data.graphics || [] });
     };
     worker.onerror = () => { const pending = this.pending; this.stop(); pending?.reject(new Error('The print engine could not start. Check your connection and retry.')); };
     this.worker = worker; return worker;
@@ -45,7 +46,7 @@ export class PrintEngine {
     return new Promise((resolve, reject) => {
       const timer = window.setTimeout(() => { this.stop(); reject(new Error('Loading the print engine took too long. Please retry.')); }, 120000);
       this.pending = { id, resolve, reject, timer };
-      worker.postMessage({ id, width, height, scale, seed: job.seed, settings: { ...printSettings(job), transparent }, paperRgb, pixels: pixels.buffer, protectedPixels: protectedPixels.buffer, selectedPixels: selectedPixels.buffer }, [pixels.buffer, protectedPixels.buffer, selectedPixels.buffer]);
+      worker.postMessage({ id, width, height, scale, seed: job.seed, settings: { ...printSettings(job), transparent, graphics: job.graphics.map(g => ({ id: g.id, ...graphicBox(g) })) }, paperRgb, pixels: pixels.buffer, protectedPixels: protectedPixels.buffer, selectedPixels: selectedPixels.buffer }, [pixels.buffer, protectedPixels.buffer, selectedPixels.buffer]);
     });
   }
 }

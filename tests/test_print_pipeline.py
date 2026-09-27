@@ -102,6 +102,30 @@ class PrintEffects(unittest.TestCase):
                 out, _ = self.render(transparent=True, **{key: value})
                 self.assertGreater(np.count_nonzero(out[:, :, 3] != unprotected[:, :, 3]), 100)
 
+    def test_graphic_handles_follow_print_geometry(self):
+        box = dict(id='orbit', x=70, y=100, width=80, height=80)
+        for settings in [dict(), dict(pageTurn=90), dict(rotation=8, pageScale=90, offsetX=5), dict(pageTurn=270, wave=70, placement=50)]:
+            with self.subTest(settings=settings):
+                mask = np.zeros_like(self.source)
+                mask[100:181,70:151] = 1
+                [moved] = pipeline.page_geometry([mask], 1, 55, settings)
+                layout = pipeline.graphic_layout(256, 320, 1, 55, dict(settings, graphics=[box]))[0]
+                y,x = np.where(moved > .9)
+                # The coordinate field and binary region share a boundary to
+                # within the interpolation footprint.
+                self.assertLess(abs(layout['x'] - x.min()), 3)
+                self.assertLess(abs(layout['y'] - y.min()), 3)
+                self.assertLess(abs(layout['x'] + layout['width'] - x.max()), 3)
+                self.assertLess(abs(layout['y'] + layout['height'] - y.max()), 3)
+                self.assertTrue(np.isfinite(layout['inverse']).all())
+                self.assertEqual(layout, pipeline.graphic_layout(256, 320, 1, 55, dict(settings, graphics=[box]))[0])
+
+    def test_graphic_metadata_does_not_change_print_pixels(self):
+        base, _ = self.render(texture=70, wear=50, rotation=8, wave=20)
+        out, _ = self.render(texture=70, wear=50, rotation=8, wave=20, graphics=[dict(id='one', x=70, y=100, width=80, height=80)])
+        np.testing.assert_array_equal(base, out)
+        self.assertEqual(pipeline.graphic_layout(256, 320, 1, 55, {}), [])
+
     def test_empty_document_does_not_fail(self):
         self.source[:]=0
         out,_=self.render(rounding=100,edgeNoise=100,wear=100,roughness=100)

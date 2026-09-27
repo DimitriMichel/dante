@@ -1,6 +1,6 @@
 import Quill from 'quill';
 import { Attributor, Scope } from 'parchment';
-import { createIcons, ArrowDownToLine, ChevronDown, Shuffle, Undo2, Redo2, AlignLeft, AlignCenter, AlignRight, Plus, Minus, Check, RotateCcw, SlidersHorizontal, ArrowUpRight, X, PanelLeftClose, PanelLeftOpen, Type } from 'lucide';
+import { createIcons, ArrowDownToLine, ChevronDown, Shuffle, Undo2, Redo2, AlignLeft, AlignCenter, AlignRight, Plus, Minus, Check, RotateCcw, SlidersHorizontal, ArrowUpRight, X, PanelLeftClose, PanelLeftOpen, Type, Orbit } from 'lucide';
 import 'quill/dist/quill.core.css';
 import './style.css';
 import { InkRenderer, type Op } from './render';
@@ -8,7 +8,10 @@ import { fontOptions, type FontKey } from './fonts';
 import { PrintEngine, type PrintJob } from './print-engine';
 import { printDefaults, printSettings, printControls, recipeSettings, validPrintInput, type PrintSettings, type PrintControl } from './print-settings';
 
-type State = PrintSettings & { font: FontKey; size: number; leading: number; spread: number; variation: number; seed: number; paper: string; ops: Op[] };
+import { readGraphics, type Graphic, type GraphicPlacement } from './graphics';
+import { GraphicControls, graphicsMarkup } from './graphic-controls';
+
+type State = PrintSettings & { font: FontKey; size: number; leading: number; spread: number; variation: number; seed: number; paper: string; ops: Op[]; graphics: Graphic[] };
 const defaultOps: Op[] = [
   { insert: 'A little more\nhuman.', attributes: {} },
 ];
@@ -20,7 +23,7 @@ defaultOps.splice(0, defaultOps.length,
   { insert: ' Let some letters hold their shape. Give others a little room to become something of their own.\n\n' },
   { insert: 'Not every mark needs to be the same.\n' },
 );
-const defaults: State = { ...printDefaults, font: 'garamond', size: 28, leading: 1.5, spread: 43, variation: 94, seed: 55, paper: '#f1ede4', ops: defaultOps };
+const defaults: State = { ...printDefaults, font: 'garamond', size: 28, leading: 1.5, spread: 43, variation: 94, seed: 55, paper: '#f1ede4', ops: defaultOps, graphics: [] };
 const storageKey = 'impression.document.v1';
 function readSaved(): State {
   try {
@@ -28,6 +31,7 @@ function readSaved(): State {
     if (!saved || !Array.isArray(saved.ops)) return structuredClone(defaults);
     return { ...defaults, ...saved, ...printSettings(saved), font: saved.font in fontOptions ? saved.font : 'garamond',
       size: Number.isFinite(saved.size) ? Math.min(48, Math.max(18, saved.size)) : 28,
+      graphics: readGraphics(saved.graphics),
       ops: saved.ops.filter((op: Op) => typeof op.insert === 'string') };
   } catch { return structuredClone(defaults); }
 }
@@ -36,7 +40,7 @@ let selection: { index: number; length: number } | null = null;
 let cursorRange = { index: 0, length: 0 };
 let selectionScope = false, original = false, zoom = 1, renderFrame = 0;
 let zoomMode: 'page' | 'width' | 'manual' = 'page';
-let activeSidebar: 'write' | 'effects' = 'write';
+let activeSidebar: 'write' | 'effects' | 'graphics' = 'write';
 let fontRevision = 0;
 let localSpread = state.spread, localVariation = state.variation;
 const $ = <T extends HTMLElement = HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
@@ -54,6 +58,7 @@ $('#app').innerHTML = `
       <div class="sidebar-tabs" role="tablist" aria-label="Editor tools">
         <button id="write-tab" role="tab" aria-selected="true" aria-controls="write-panel">${icon('type')}Write</button>
         <button id="effects-tab" role="tab" aria-selected="false" aria-controls="effects-panel" tabindex="-1">${icon('sliders-horizontal')}Effects</button>
+        <button id="graphics-tab" role="tab" aria-selected="false" aria-controls="graphics-panel" tabindex="-1">${icon('orbit')}Graphics</button>
       </div>
       <section id="write-panel" class="compose-panel" role="tabpanel" aria-labelledby="write-tab">
       <div class="toolbar" role="toolbar" aria-label="Text formatting">
@@ -88,6 +93,7 @@ $('#app').innerHTML = `
       </div>
 
       </section>
+      <section id="graphics-panel" class="graphics-panel" role="tabpanel" aria-labelledby="graphics-tab" hidden>${graphicsMarkup}</section>
       <footer class="sidebar-footer">
         <div class="paper-picker" aria-label="Paper color"><span>Paper</span>
           <button data-paper="#f1ede4" class="swatch warm" aria-label="Warm paper" title="Warm paper" aria-pressed="true"><span aria-hidden="true"></span></button>
@@ -107,11 +113,11 @@ $('#app').innerHTML = `
         <div class="zoom-controls" aria-label="Preview zoom"><button id="zoom-out" class="icon-button" aria-label="Zoom out">${icon('minus')}</button><button id="zoom-value" title="Reset to actual size" aria-label="Reset zoom to 100 percent">100%</button><button id="zoom-in" class="icon-button" aria-label="Zoom in">${icon('plus')}</button><span class="toolbar-divider"></span><button id="zoom-fit" class="text-button" aria-pressed="true">Fit page</button><button id="zoom-width" class="text-button" aria-pressed="false">Fit width</button><button id="zoom-actual" class="text-button" aria-pressed="false">100%</button></div>
         <button id="export" class="primary" aria-label="Export PNG" title="Export PNG">${icon('arrow-down-to-line')}<span>Export PNG</span></button>
       </div>
-      <div class="proof-stage" tabindex="0" aria-label="Paper preview. Use the zoom controls to inspect the print."><div class="paper-wrap"><div class="proof-sheet"><svg id="proof" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Live paper proof of your text"></svg><canvas id="printed-proof" role="img" aria-label="Printed proof of your text" hidden></canvas><canvas id="print-selection" aria-hidden="true"></canvas></div></div></div>
+      <div class="proof-stage" tabindex="0" aria-label="Paper preview. Use the zoom controls to inspect the print."><div class="paper-wrap"><div class="proof-sheet"><svg id="proof" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Live paper proof of your text"></svg><canvas id="printed-proof" role="img" aria-label="Printed proof of your text" hidden></canvas><canvas id="print-selection" aria-hidden="true"></canvas><div id="graphic-overlay" aria-label="Graphics on the paper"></div></div></div></div>
       <div class="proof-status"><span id="print-status" role="status">Preparing print…</span><button id="print-retry" class="text-button" hidden>Retry</button></div>
     </section>
   </main><div id="toast" role="status" class="toast"></div>`;
-const icons = { ArrowDownToLine, ChevronDown, Shuffle, Undo2, Redo2, AlignLeft, AlignCenter, AlignRight, Plus, Minus, Check, RotateCcw, SlidersHorizontal, ArrowUpRight, X, PanelLeftClose, PanelLeftOpen, Type };
+const icons = { ArrowDownToLine, ChevronDown, Shuffle, Undo2, Redo2, AlignLeft, AlignCenter, AlignRight, Plus, Minus, Check, RotateCcw, SlidersHorizontal, ArrowUpRight, X, PanelLeftClose, PanelLeftOpen, Type, Orbit };
 createIcons({ icons });
 class InkAttribute extends Attributor {
   canAdd(node: HTMLElement, value: string) { return /^(clean|\d{1,3},\d{1,3})$/.test(value) && super.canAdd(node, value); }
@@ -133,6 +139,8 @@ const printSheet = $('.proof-sheet');
 const printSelection = $<HTMLCanvasElement>('#print-selection');
 let desiredPrint: PrintJob | null = null, printedKey = '', failedPrintKey = '';
 let printedSize: { width: number; height: number } | null = null;
+let printedGraphics: Graphic[] = [], graphicPlacements: GraphicPlacement[] = [];
+const graphicControls = new GraphicControls($('#graphics-panel'), $('#graphic-overlay'), () => state.graphics, () => ({ width: renderer.width, height: !printCanvas.hidden && printedSize ? printedSize.height : renderer.height, placements: original ? [] : graphicPlacements, printedGraphics: original ? [] : printedGraphics }), () => { sync(); save(); }, () => showSidebarTab('graphics'));
 let printTask: Promise<void> | null = null, printTimer = 0;
 const engine = new PrintEngine(message => { if (!original && printSheet.getAttribute('aria-busy') === 'true') $('#print-status').textContent = printedKey ? 'Updating print…' : message; });
 function showPrinted(show: boolean) {
@@ -173,6 +181,7 @@ async function ensurePrinted(): Promise<void> {
         printCanvas.width = proof.width; printCanvas.height = proof.height;
         printCanvas.getContext('2d')!.putImageData(new ImageData(proof.pixels as Uint8ClampedArray<ArrayBuffer>, proof.width, proof.height), 0, 0);
         paintPrintSelection(proof.selection, proof.width, proof.height);
+        printedGraphics = job.graphics; graphicPlacements = proof.graphics;
         printedKey = job.key; printedSize = { width: job.width, height: job.height };
         if (!original) { showPrinted(true); showPrintSelection(); printReadyStatus(); updatePreviewScale(); }
       } catch (error) {
@@ -191,9 +200,9 @@ async function ensurePrinted(): Promise<void> {
 function queuePrinted(ops: Op[]) {
   showPrintSelection();
   if (original) { showPrinted(false); printSheet.setAttribute('aria-busy', 'false'); $('#print-retry').hidden = true; $('#print-status').textContent = 'Original type'; return; }
-  const key = JSON.stringify([ops, state.font, state.size, state.leading, state.spread, state.variation, state.seed, state.paper, printSettings(state), selectionScope ? selection : null, fontRevision]);
+  const key = JSON.stringify([ops, state.font, state.size, state.leading, state.spread, state.variation, state.seed, state.paper, state.graphics, printSettings(state), selectionScope ? selection : null, fontRevision]);
   const alreadyQueued = desiredPrint?.key === key;
-  if (!alreadyQueued) desiredPrint = { ...state, selection: selectionScope && selection ? { ...selection } : null, key, root: renderer.root.cloneNode(true) as SVGSVGElement, width: renderer.width, height: renderer.height, cells: renderer.cells.map(cell => ({ ...cell, attrs: { ...cell.attrs } })), label: fontOptions[state.font].label };
+  if (!alreadyQueued) desiredPrint = { ...state, graphics: structuredClone(state.graphics), selection: selectionScope && selection ? { ...selection } : null, key, root: renderer.root.cloneNode(true) as SVGSVGElement, width: renderer.width, height: renderer.height, cells: renderer.cells.map(cell => ({ ...cell, attrs: { ...cell.attrs } })), label: fontOptions[state.font].label };
   if (printedKey === key) {
     // Returning to the visible print cancels any newer result still in flight.
     clearTimeout(printTimer);
@@ -221,6 +230,7 @@ function schedule() {
     renderer.highlight(selectionScope ? selection : null);
     queuePrinted(ops);
     updatePreviewScale();
+    graphicControls.syncOverlay();
   });
 }
 function sync() {
@@ -260,6 +270,7 @@ function sync() {
   const formats = selection ? quill.getFormat(selection.index, selection.length) : quill.getFormat(cursorRange.index, cursorRange.length);
   $('#bold').setAttribute('aria-pressed', String(formats.bold === true)); $('#italic').setAttribute('aria-pressed', String(formats.italic === true));
   $<HTMLSelectElement>('#heading').value = String(formats.header || 0);
+  graphicControls.sync();
   schedule();
 }
 function selectionChanged(range: { index: number; length: number } | null) {
@@ -324,21 +335,23 @@ $('#align').addEventListener('click', () => {
   $('#align').innerHTML = icon(align === 'center' ? 'align-center' : align === 'right' ? 'align-right' : 'align-left');
   $('#align').setAttribute('aria-label', `Text alignment: ${align || 'left'}`); createIcons({ icons });
 });
-function showSidebarTab(tab: 'write' | 'effects') {
+function showSidebarTab(tab: 'write' | 'effects' | 'graphics') {
   activeSidebar = tab;
-  for (const name of ['write', 'effects'] as const) {
+  $('.workspace').classList.toggle('arranging-graphics', tab === 'graphics');
+  for (const name of ['write', 'effects', 'graphics'] as const) {
     const active = tab === name;
     $(`#${name}-panel`).hidden = !active;
     $(`#${name}-tab`).setAttribute('aria-selected', String(active));
     $(`#${name}-tab`).tabIndex = active ? 0 : -1;
   }
 }
-for (const name of ['write', 'effects'] as const) {
+for (const name of ['write', 'effects', 'graphics'] as const) {
   $(`#${name}-tab`).addEventListener('click', () => showSidebarTab(name));
   $(`#${name}-tab`).addEventListener('keydown', event => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault();
-    const next = event.key === 'Home' ? 'write' : event.key === 'End' ? 'effects' : activeSidebar === 'write' ? 'effects' : 'write';
+    const tabs = ['write', 'effects', 'graphics'] as const;
+    const next = event.key === 'Home' ? 'write' : event.key === 'End' ? 'graphics' : tabs[(tabs.indexOf(activeSidebar) + (event.key === 'ArrowRight' ? 1 : 2)) % 3];
     showSidebarTab(next); $(`#${next}-tab`).focus();
   });
 }
@@ -368,6 +381,7 @@ function updatePreviewScale() {
   $('#zoom-actual').setAttribute('aria-pressed', String(zoomMode === 'manual' && zoom === 1));
   $<HTMLButtonElement>('#zoom-in').disabled = zoom >= 3;
   $<HTMLButtonElement>('#zoom-out').disabled = zoom <= .15;
+  graphicControls.syncOverlay();
 }
 function changeZoom(value: number) {
   zoomMode = 'manual'; zoom = Math.min(3, Math.max(.15, value)); updatePreviewScale();
@@ -407,7 +421,7 @@ const modelContext = (document as Document & { modelContext?: { registerTool: (t
 if (modelContext?.registerTool) {
   const lifecycle = new AbortController();
   const register = (tool: unknown) => { try { void Promise.resolve(modelContext.registerTool(tool, { signal: lifecycle.signal })).catch(console.warn); } catch (error) { console.warn(error); } };
-  register({ name: 'read_impression', description: 'Read the current text and document ink settings.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: true, untrustedContentHint: true }, execute: () => ({ text: quill.getText(), font: state.font, spread: state.spread, unevenness: state.variation, ...printSettings(state), printStatus: $('#print-status').textContent }) });
+  register({ name: 'read_impression', description: 'Read the current text and document ink settings.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: true, untrustedContentHint: true }, execute: () => ({ text: quill.getText(), graphics: state.graphics, font: state.font, spread: state.spread, unevenness: state.variation, ...printSettings(state), printStatus: $('#print-status').textContent }) });
   register({ name: 'set_document_ink', description: 'Set document ink spread and unevenness while preserving selection overrides.', inputSchema: { type: 'object', properties: { spread: { type: 'integer', minimum: 0, maximum: 100 }, unevenness: { type: 'integer', minimum: 0, maximum: 100 } }, required: ['spread', 'unevenness'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, execute: async (input: unknown) => { const value = input as { spread: number; unevenness: number }; if (!value || ![value.spread, value.unevenness].every(x => Number.isInteger(x) && x >= 0 && x <= 100)) throw new Error('Ink values must be integers between 0 and 100.'); state.spread = value.spread; state.variation = value.unevenness; sync(); save(); await new Promise(requestAnimationFrame); return { spread: state.spread, unevenness: state.variation }; } });
   register({ name: 'set_print_finish', description: 'Set print effects using the visible controls. Setting recipe chooses a starting look and resets added effects before applying other supplied values. Rendering runs locally in the background; read_impression reports status.', inputSchema: { type: 'object', properties: { finish: { type: 'string', enum: ['print'] }, recipe: { type: 'string', enum: ['custom', 'book', 'fiber'] }, paperStyle: { type: 'string', enum: ['fibrous', 'multiscale'] }, pageTurn: { type: 'integer', enum: [0, 90, 180, 270] }, ...Object.fromEntries(Object.entries(printControls).map(([name, spec]) => [name, { type: 'integer', minimum: spec.min, maximum: spec.max, description: `${spec.label}. ${spec.help}` }])) }, additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, execute: (input: unknown) => {
     if (!validPrintInput(input)) throw new Error('Choose a valid print setting within its slider range.');

@@ -170,10 +170,42 @@ def render_arrays(source, guard, selection, scale, seed, s, paper_rgb):
     return out, (np.clip(selection, 0, 1) * 255).astype(np.uint8)
 
 
+def graphic_layout(width, height, scale, seed, settings):
+    """Match drag handles to the same geometric distortion as the printed ink."""
+    boxes = settings.get('graphics', [])
+    if not boxes:
+        return []
+    changed = settings.get('pageTurn', 0) or settings.get('pageScale', 100) != 100 or any(settings.get(key, 0) for key in ['placement', 'rotation', 'stretch', 'offsetX', 'offsetY', 'wave'])
+    if not changed:
+        return [dict(box, inverse=[1, 0, 0, 1]) for box in boxes]
+    ys, xs = np.indices((height, width), dtype=np.float32)
+    map_x, map_y, valid = page_geometry([xs / width, ys / height, np.ones_like(xs)], scale, seed, settings)
+    gx_y, gx_x = np.gradient(map_x)
+    gy_y, gy_x = np.gradient(map_y)
+    result = []
+    for box in boxes:
+        left, top = box['x'] * scale / width, box['y'] * scale / height
+        right, bottom = left + box['width'] * scale / width, top + box['height'] * scale / height
+        inside = (valid > .9) & (map_x >= left) & (map_x <= right) & (map_y >= top) & (map_y <= bottom)
+        rows, cols = np.where(inside)
+        if not rows.size:
+            continue
+        distance = (map_x - (left + right) / 2) ** 2 + (map_y - (top + bottom) / 2) ** 2
+        distance[~inside] = np.inf
+        y, x = np.unravel_index(np.argmin(distance), distance.shape)
+        inverse = [float(gx_x[y, x] * width), float(gx_y[y, x] * width), float(gy_x[y, x] * height), float(gy_y[y, x] * height)]
+        if abs(inverse[0] * inverse[3] - inverse[1] * inverse[2]) < .01:
+            inverse = [1, 0, 0, 1]
+        result.append(dict(id=box['id'], x=float(cols.min() / scale), y=float(rows.min() / scale), width=float((cols.max() - cols.min() + 1) / scale), height=float((rows.max() - rows.min() + 1) / scale), inverse=inverse))
+    return result
+
+
 def make_print(pixels, protected, selected, width, height, scale, seed, settings, paper_rgb):
     source = np.asarray(pixels.to_py(), dtype=np.uint8).reshape(height, width, 4)
     coverage = 1 - source[:, :, 0].astype(np.float32) / 255
     guard = np.asarray(protected.to_py(), dtype=np.uint8).reshape(height, width).astype(np.float32) / 255
     selection = np.asarray(selected.to_py(), dtype=np.uint8).reshape(height, width).astype(np.float32) / 255
-    out, overlay = render_arrays(coverage, guard, selection, scale, seed, json.loads(settings), paper_rgb.to_py())
-    return out.ravel(), overlay.ravel()
+    settings = json.loads(settings)
+    out, overlay = render_arrays(coverage, guard, selection, scale, seed, settings, paper_rgb.to_py())
+    layout = graphic_layout(width, height, scale, seed, settings)
+    return out.ravel(), overlay.ravel(), json.dumps(layout)
