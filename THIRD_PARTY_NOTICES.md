@@ -1,9 +1,9 @@
 # Third-party notices
 
-The Impression Personal Use License applies to original Impression code and
+The Dante Personal Use License applies to original Dante code and
 material. It does not replace or restrict the licenses of third-party components.
 
-- **Historical engravings:** archive illustrations from Wikimedia Commons and museum collections, identified by their sources as public domain or CC0. See [graphics sources](docs/graphics-sources.md) and the archive records for the full rights statements. Impression's license does not restrict these images.
+- **Historical engravings:** archive illustrations from Wikimedia Commons and museum collections, identified by their sources as public domain or CC0. See [graphics sources](docs/graphics-sources.md) and the archive records for the full rights statements. Dante's license does not restrict these images.
 - **Bundled serif fonts:** upstream license texts are in
   [public/font-licenses](public/font-licenses). Keep these notices with the fonts.
 - **Pretext (`@chenglou/pretext` 0.0.9):** MIT, copyright 2026 Pretext contributors.
@@ -16,7 +16,7 @@ material. It does not replace or restrict the licenses of third-party components
   apply. See their official distributions for the complete notices.
 - **ocrodeg:** by Thomas Breuel / NVIDIA, fetched from the pinned upstream
   [NVlabs/ocrodeg](https://github.com/NVlabs/ocrodeg) source at runtime. The upstream
-  source is not distributed in this repository. Impression's license grants no
+  source is not distributed in this repository. Dante's license grants no
   rights to that upstream source; consult its repository for applicable terms.
 
 The before-and-after images in `docs/images` were supplied for this application.

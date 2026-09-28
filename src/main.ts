@@ -24,6 +24,7 @@ defaultOps.splice(0, defaultOps.length,
   { insert: 'Not every mark needs to be the same.\n' },
 );
 const defaults: State = { ...printDefaults, font: 'garamond', size: 28, leading: 1.5, spread: 43, variation: 94, seed: 55, paper: '#f1ede4', ops: defaultOps, graphics: [] };
+// Keep the original storage key so existing documents survive the Dante rename.
 const storageKey = 'impression.document.v1';
 function readSaved(): State {
   try {
@@ -53,7 +54,7 @@ $('#app').innerHTML = `
   <main class="workspace">
     <aside id="studio-sidebar" class="studio-sidebar" aria-label="Text and effect controls">
       <header class="studio-header">
-        <a class="brand" href="./" aria-label="Impression home"><span class="monogram">i</span><span>impression<span class="brand-dot">.</span></span></a>
+        <a class="brand" href="./" aria-label="Dante home"><span class="monogram">d</span><span>dante<span class="brand-dot">.</span></span></a>
       </header>
       <div class="sidebar-tabs" role="tablist" aria-label="Editor tools">
         <button id="write-tab" role="tab" aria-selected="true" aria-controls="write-panel">${icon('type')}Write</button>

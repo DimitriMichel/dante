@@ -47,7 +47,7 @@ export async function rasterizeProof(root: SVGSVGElement, width: number, height:
 
 export async function downloadCanvas(canvas: HTMLCanvasElement) {
   const png = await new Promise<Blob>((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('PNG encoding failed')), 'image/png'));
-  const downloadUrl = URL.createObjectURL(png), anchor = document.createElement('a'); anchor.href = downloadUrl; anchor.download = 'impression.png'; anchor.click(); setTimeout(() => URL.revokeObjectURL(downloadUrl), 60000);
+  const downloadUrl = URL.createObjectURL(png), anchor = document.createElement('a'); anchor.href = downloadUrl; anchor.download = 'dante.png'; anchor.click(); setTimeout(() => URL.revokeObjectURL(downloadUrl), 60000);
 }
 export async function exportPng(root: SVGSVGElement, width: number, height: number, font: string, label: string) {
   await downloadCanvas(await rasterizeProof(root, width, height, font, label));

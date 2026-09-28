@@ -1,8 +1,8 @@
-# Impression
+# Dante
 
 **A little more human.**
 
-Impression turns clean digital type into something that looks printed: ink that spreads, edges that soften, and small imperfections that give each letter character. Write on the left, see the printed result on the right, and adjust the effects without losing sight of your last finished print.
+Dante turns clean digital type into something that looks printed: ink that spreads, edges that soften, and small imperfections that give each letter character. Write on the left, see the printed result on the right, and adjust the effects without losing sight of your last finished print.
 
 Built for serif typography, with rich text editing, selective ink treatments, repeatable randomness, draggable geometric graphics, and PNG export. All text and image processing stays in your browser.
 
